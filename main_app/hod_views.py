@@ -20,6 +20,8 @@ def admin_home(request):
     subjects = Subject.objects.all()
     total_subject = subjects.count()
     total_course = Course.objects.all().count()
+    total_hod = Course.objects.exclude(hod__isnull=True).count()
+    assigned_faculties = Course.objects.select_related('hod').all().order_by('name')
     attendance_list = Attendance.objects.filter(subject__in=subjects)
     total_attendance = attendance_list.count()
     attendance_list = []
@@ -67,12 +69,31 @@ def admin_home(request):
         student_attendance_leave_list.append(leave+absent)
         student_name_list.append(student.admin.first_name)
 
+    holiday_rows = [
+        {'name': 'Institution Day', 'from': '2026/04/01', 'to': '2026/04/01', 'remarks': 'College anniversary'},
+        {'name': 'Student Orientation', 'from': '2026/05/15', 'to': '2026/05/15', 'remarks': 'Freshers welcome'},
+        {'name': 'Mid Semester Break', 'from': '2026/07/10', 'to': '2026/07/14', 'remarks': 'Academic break'},
+        {'name': 'Dashain Holiday', 'from': '2026/10/01', 'to': '2026/10/10', 'remarks': 'Festival leave'},
+        {'name': 'Winter Recess', 'from': '2026/12/24', 'to': '2026/12/31', 'remarks': 'Year-end holiday'},
+    ]
+
+    class_routine = {
+        'Monday': 'General faculty meeting / HOD review',
+        'Tuesday': 'Department coordination',
+        'Wednesday': 'Student support and approval review',
+        'Thursday': 'Academic planning block',
+        'Friday': 'Faculty monitoring and reports',
+        'Saturday': 'Administrative backlog review',
+        'Sunday': 'Off day',
+    }
+
     context = {
         'page_title': "Administrative Dashboard",
         'total_students': total_students,
         'total_staff': total_staff,
         'total_course': total_course,
         'total_subject': total_subject,
+        'total_hod': total_hod,
         'subject_list': subject_list,
         'attendance_list': attendance_list,
         'student_attendance_present_list': student_attendance_present_list,
@@ -81,9 +102,16 @@ def admin_home(request):
         "student_count_list_in_subject": student_count_list_in_subject,
         "student_count_list_in_course": student_count_list_in_course,
         "course_name_list": course_name_list,
+        "assigned_faculties": assigned_faculties,
+        'holiday_rows': holiday_rows,
+        'class_routine': class_routine,
+        'clearance_request_count': LeaveReportStaff.objects.filter(status=0).count(),
+        'library_books_count': Book.objects.count(),
+        'leave_balance_count': LeaveReportStudent.objects.filter(status=1).count(),
+        'pending_leave_count': LeaveReportStaff.objects.filter(status=0).count() + LeaveReportStudent.objects.filter(status=0).count(),
 
     }
-    return render(request, 'hod_template/home_content.html', context)
+    return render(request, 'hod_template/erpnext_home_content.html', context)
 
 
 def add_staff(request):
@@ -158,14 +186,16 @@ def add_course(request):
     form = CourseForm(request.POST or None)
     context = {
         'form': form,
-        'page_title': 'Add Course'
+        'page_title': 'Add Faculty / Department'
     }
     if request.method == 'POST':
         if form.is_valid():
             name = form.cleaned_data.get('name')
+            hod = form.cleaned_data.get('hod')
             try:
                 course = Course()
                 course.name = name
+                course.hod = hod
                 course.save()
                 messages.success(request, "Successfully Added")
                 return redirect(reverse('add_course'))
@@ -226,7 +256,7 @@ def manage_course(request):
     courses = Course.objects.all()
     context = {
         'courses': courses,
-        'page_title': 'Manage Courses'
+        'page_title': 'Manage Faculties / Departments'
     }
     return render(request, "hod_template/manage_course.html", context)
 
@@ -344,14 +374,16 @@ def edit_course(request, course_id):
     context = {
         'form': form,
         'course_id': course_id,
-        'page_title': 'Edit Course'
+        'page_title': 'Edit Faculty / Department'
     }
     if request.method == 'POST':
         if form.is_valid():
             name = form.cleaned_data.get('name')
+            hod = form.cleaned_data.get('hod')
             try:
                 course = Course.objects.get(id=course_id)
                 course.name = name
+                course.hod = hod
                 course.save()
                 messages.success(request, "Successfully Updated")
             except:

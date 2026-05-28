@@ -47,20 +47,20 @@
         <div class="nav-item has-submenu {% if 'course' in request.path %}open{% endif %}">
             <a href="#" class="nav-link">
                 <i class="nav-icon fas fa-graduation-cap"></i>
-                <span class="nav-text">Courses</span>
+                <span class="nav-text">Faculties / Departments</span>
                 <i class="nav-arrow fas fa-chevron-right"></i>
             </a>
             <div class="nav-submenu">
                 <div class="nav-item">
                     {% url 'add_course' as add_course %}
                     <a href="{{ add_course }}" class="nav-link {% if add_course == request.path %}active{% endif %}">
-                        <span class="nav-text">Add Course</span>
+                        <span class="nav-text">Add Faculty / HOD</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     {% url 'manage_course' as manage_course %}
                     <a href="{{ manage_course }}" class="nav-link {% if manage_course == request.path or 'edit_course' in request.path %}active{% endif %}">
-                        <span class="nav-text">Manage Courses</span>
+                        <span class="nav-text">Manage Faculties</span>
                     </a>
                 </div>
             </div>

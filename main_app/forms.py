@@ -88,10 +88,13 @@ class StaffForm(CustomUserForm):
 class CourseForm(FormSettings):
     def __init__(self, *args, **kwargs):
         super(CourseForm, self).__init__(*args, **kwargs)
+        self.fields['name'].label = 'Faculty / Department Name'
+        if 'hod' in self.fields:
+            self.fields['hod'].label = 'Head of Department'
 
     class Meta:
-        fields = ['name']
         model = Course
+        fields = ['name', 'hod']
 
 
 class SubjectForm(FormSettings):
