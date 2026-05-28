@@ -7,3 +7,6 @@ whitenoise
 Pillow
 requests
 psycopg2-binary
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
