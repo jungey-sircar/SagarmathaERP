@@ -35,7 +35,7 @@
                                     <td>{{staff.last_name}}, {{staff.first_name}}</td>
                                     <td>{{staff.email}}</td>
                                     <td>{{staff.gender}}</td>
-                                    <td>{{ staff.staff.get_role_display }}</td>
+                                    <td>{{ staff.staff.role }}</td>
                                     <td>{{ staff.staff.role_detail|default:'-' }}</td>
                                     <td>{{staff.staff.course.name}}</td>
                                     <td>

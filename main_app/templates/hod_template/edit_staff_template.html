@@ -14,6 +14,11 @@
                         <h3 class="card-title">{{page_title}}</h3>
                     </div>
                     {% include "main_app/form_template.html" with messages=messages  form=form button_text="Update Staff"%}
+                    <datalist id="role-options">
+                        {% for role_name in role_suggestions %}
+                            <option value="{{ role_name }}"></option>
+                        {% endfor %}
+                    </datalist>
                 </div>
                 <!-- /.card -->
 

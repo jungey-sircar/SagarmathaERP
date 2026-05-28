@@ -116,7 +116,11 @@ def admin_home(request):
 
 def add_staff(request):
     form = StaffForm(request.POST or None, request.FILES or None)
-    context = {'form': form, 'page_title': 'Add Staff'}
+    context = {
+        'form': form,
+        'page_title': 'Add Staff',
+        'role_suggestions': getattr(form, 'role_suggestions', []),
+    }
     if request.method == 'POST':
         if form.is_valid():
             first_name = form.cleaned_data.get('first_name')
@@ -280,7 +284,8 @@ def edit_staff(request, staff_id):
     context = {
         'form': form,
         'staff_id': staff_id,
-        'page_title': 'Edit Staff'
+        'page_title': 'Edit Staff',
+        'role_suggestions': getattr(form, 'role_suggestions', []),
     }
     if request.method == 'POST':
         if form.is_valid():

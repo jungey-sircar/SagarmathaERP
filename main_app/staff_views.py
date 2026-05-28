@@ -15,8 +15,9 @@ from datetime import date
 def staff_home(request):
     staff = get_object_or_404(Staff, admin=request.user)
     total_leave = LeaveReportStaff.objects.filter(staff=staff).count()
+    role_text = (staff.role or '').strip().lower()
 
-    if staff.role == 'hod':
+    if role_text.startswith('hod') or 'head of department' in role_text:
         department_subjects = Subject.objects.filter(course=staff.course)
         department_students = Student.objects.filter(course=staff.course)
         department_staff = Staff.objects.filter(course=staff.course)
@@ -29,7 +30,7 @@ def staff_home(request):
         context = {
             'page_title': 'HOD Dashboard',
             'staff_name': staff.admin.get_full_name() or staff.admin.first_name,
-            'role_title': 'Head of Department',
+            'role_title': staff.role,
             'role_detail': staff.role_detail or staff.course.name,
             'department_name': staff.course.name if staff.course else 'Unassigned',
             'total_students': department_students.count(),
@@ -42,13 +43,13 @@ def staff_home(request):
         }
         return render(request, "staff_template/hod_dashboard.html", context)
 
-    if staff.role == 'coordinator':
+    if 'coordinator' in role_text or 'co-ordinator' in role_text:
         department_students = Student.objects.filter(course=staff.course)
         department_subjects = Subject.objects.filter(course=staff.course)
         context = {
             'page_title': 'Coordinator Dashboard',
             'staff_name': staff.admin.get_full_name() or staff.admin.first_name,
-            'role_title': 'Coordinator',
+            'role_title': staff.role,
             'role_detail': staff.role_detail or 'General Coordination',
             'department_name': staff.course.name if staff.course else 'Unassigned',
             'total_students': department_students.count(),

@@ -11,13 +11,7 @@
                 {% if user.user_type == '1' %}
                     Administrator
                 {% elif user.user_type == '2' %}
-                    {% if user.staff.role == 'hod' %}
-                        HOD{% if user.staff.course %} - {{ user.staff.course.name }}{% endif %}
-                    {% elif user.staff.role == 'coordinator' %}
-                        Coordinator{% if user.staff.role_detail %} - {{ user.staff.role_detail }}{% endif %}
-                    {% else %}
-                        Staff Member
-                    {% endif %}
+                    {{ user.staff.role|default:'Staff Member' }}{% if user.staff.role_detail %} - {{ user.staff.role_detail }}{% endif %}
                 {% else %}
                     Student
                 {% endif %}

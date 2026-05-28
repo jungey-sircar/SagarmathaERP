@@ -76,13 +76,24 @@ class AdminForm(CustomUserForm):
 
 
 class StaffForm(CustomUserForm):
-    staff_role = forms.ChoiceField(choices=Staff.STAFF_ROLE, label='Staff Role')
+    staff_role = forms.CharField(required=True, max_length=120, label='Role Title')
     role_detail = forms.CharField(required=False, label='Department / Coordination Area')
 
     def __init__(self, *args, **kwargs):
         super(StaffForm, self).__init__(*args, **kwargs)
         self.fields['course'].label = 'Department / Faculty'
-        self.fields['role_detail'].help_text = 'Required for coordinators. Example: Academic, Sports, Exam, Discipline.'
+        self.fields['staff_role'].help_text = 'Type any role, for example: Teacher, HOD of Maths, Inventory Incharge, Sports Coordinator.'
+        self.fields['staff_role'].widget.attrs.update({
+            'placeholder': 'Enter custom role title',
+            'list': 'role-options',
+        })
+        self.fields['role_detail'].help_text = 'Optional role scope or area. Example: Academic, Sports, Exam, Library.'
+
+        role_suggestions = list(
+            Staff.objects.exclude(role__exact='').values_list('role', flat=True).distinct().order_by('role')
+        )
+        self.role_suggestions = role_suggestions
+
         if self.instance and getattr(self.instance, 'pk', None):
             self.fields['staff_role'].initial = self.instance.role
             self.fields['role_detail'].initial = self.instance.role_detail
@@ -95,9 +106,8 @@ class StaffForm(CustomUserForm):
     def clean(self):
         cleaned_data = super().clean()
         staff_role = cleaned_data.get('staff_role')
-        role_detail = cleaned_data.get('role_detail')
-        if staff_role == 'coordinator' and not role_detail:
-            self.add_error('role_detail', 'Please enter the coordination area for this coordinator.')
+        if staff_role:
+            cleaned_data['staff_role'] = staff_role.strip()
         return cleaned_data
 
 
