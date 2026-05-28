@@ -73,8 +73,7 @@ class Course(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='hod_course',
-        limit_choices_to={'user_type': '1'}
+        related_name='hod_course'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

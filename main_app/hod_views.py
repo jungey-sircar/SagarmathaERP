@@ -14,6 +14,26 @@ from .forms import *
 from .models import *
 
 
+def _is_hod_role(role_name):
+    role_text = (role_name or '').strip().lower()
+    return role_text.startswith('hod') or 'head of department' in role_text
+
+
+def _sync_hod_course(course, user, role_name):
+    existing_course = getattr(user, 'hod_course', None)
+    if existing_course and existing_course.id != getattr(course, 'id', None):
+        existing_course.hod = None
+        existing_course.save(update_fields=['hod'])
+
+    if _is_hod_role(role_name):
+        if course:
+            course.hod = user
+            course.save(update_fields=['hod'])
+    elif existing_course and existing_course.id == getattr(course, 'id', None):
+        course.hod = None
+        course.save(update_fields=['hod'])
+
+
 def admin_home(request):
     total_staff = Staff.objects.all().count()
     total_students = Student.objects.all().count()
@@ -145,6 +165,7 @@ def add_staff(request):
                 user.staff.role_detail = role_detail
                 user.staff.course = course
                 user.save()
+                _sync_hod_course(course, user, staff_role)
                 messages.success(request, "Successfully Added")
                 return redirect(reverse('add_staff'))
 
@@ -318,6 +339,7 @@ def edit_staff(request, staff_id):
                 staff.role_detail = role_detail
                 user.save()
                 staff.save()
+                _sync_hod_course(course, user, staff_role)
                 messages.success(request, "Successfully Updated")
                 return redirect(reverse('edit_staff', args=[staff_id]))
             except Exception as e:

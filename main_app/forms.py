@@ -1,8 +1,14 @@
 from django import forms
+from django.db.models import Q
 from django.forms.widgets import DateInput, TextInput
 
 from .models import *
 from . import models
+
+
+def _is_hod_role(role_name):
+    role_text = (role_name or '').strip().lower()
+    return role_text.startswith('hod') or 'head of department' in role_text
 
 
 class FormSettings(forms.ModelForm):
@@ -117,6 +123,17 @@ class CourseForm(FormSettings):
         self.fields['name'].label = 'Faculty / Department Name'
         if 'hod' in self.fields:
             self.fields['hod'].label = 'Head of Department'
+            hod_ids = [
+                staff.admin_id
+                for staff in Staff.objects.select_related('admin').all()
+                if _is_hod_role(staff.role)
+            ]
+            queryset = CustomUser.objects.filter(id__in=hod_ids)
+            if self.instance and getattr(self.instance, 'pk', None):
+                queryset = queryset.filter(Q(hod_course__isnull=True) | Q(hod_course__id=self.instance.id))
+            else:
+                queryset = queryset.filter(hod_course__isnull=True)
+            self.fields['hod'].queryset = queryset.order_by('first_name', 'last_name')
 
     class Meta:
         model = Course
