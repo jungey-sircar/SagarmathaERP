@@ -63,10 +63,11 @@
                         placeholder="Enter your password" required>
                 </div>
 
-                <!-- reCAPTCHA -->
+                {% if recaptcha_site_key %}
                 <div class="form-group text-center">
-                    <div class="g-recaptcha" data-sitekey="6LfTGD4qAAAAAJLKy1TGJY7uuTh_T1cB5VikRWjF"></div>
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
                 </div>
+                {% endif %}
 
                 <div class="form-group">
                     <div class="form-check">
