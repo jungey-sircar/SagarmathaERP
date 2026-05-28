@@ -111,7 +111,7 @@ def admin_home(request):
         'pending_leave_count': LeaveReportStaff.objects.filter(status=0).count() + LeaveReportStudent.objects.filter(status=0).count(),
 
     }
-    return render(request, 'hod_template/erpnext_home_content.html', context)
+    return render(request, 'hod_template/home_content.html', context)
 
 
 def add_staff(request):
