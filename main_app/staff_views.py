@@ -27,6 +27,26 @@ def staff_home(request):
             attendance_list.append(Attendance.objects.filter(subject=subject).count())
             subject_list.append(subject.name)
 
+        holiday_rows = [
+            {'name': 'Janai Purnima [जनै पूर्णिमा]', 'from': '2082/04/24', 'to': '2082/04/24', 'remarks': 'Janai Purnima [जनै पूर्णिमा]'},
+            {'name': 'Gen-Z Revolution', 'from': '2082/05/24', 'to': '2082/05/26', 'remarks': 'Gen-Z Revolution'},
+            {'name': 'Gen-Z Revolution', 'from': '2082/05/29', 'to': '2082/05/29', 'remarks': 'Gen-Z Revolution'},
+            {'name': 'Mourning Day of GenZ', 'from': '2082/06/01', 'to': '2082/06/01', 'remarks': 'Mourning Day of GenZ'},
+            {'name': 'Constitution Day संविधान दिवस', 'from': '2082/06/03', 'to': '2082/06/03', 'remarks': 'Constitution Day संविधान दिवस'},
+        ]
+
+        class_routine = [
+            ('Sun', 'Routine has not been uploaded for Sunday.'),
+            ('Mon', 'Routine has not been uploaded for Monday.'),
+            ('Tue', 'Routine has not been uploaded for Tuesday.'),
+            ('Wed', 'Routine has not been uploaded for Wednesday.'),
+            ('Thu', 'Routine has not been uploaded for Thursday.'),
+            ('Fri', 'Routine has not been uploaded for Friday.'),
+            ('Sat', 'Routine has not been uploaded for Saturday.'),
+        ]
+
+        announcement = ""
+
         context = {
             'page_title': 'HOD Dashboard',
             'staff_name': staff.admin.get_full_name() or staff.admin.first_name,
@@ -40,6 +60,17 @@ def staff_home(request):
             'total_leave': total_leave,
             'subject_list': subject_list,
             'attendance_list': attendance_list,
+            'clearance_request_count': 0,
+            'library_books_count': 0,
+            'leave_balance_count': 0,
+            'pending_leave_count': 0,
+            'optional_holiday_count': 0,
+            'kaaj_tour_count': 0,
+            'store_requisition_count': 0,
+            'substitute_work_day_count': 0,
+            'holiday_rows': holiday_rows,
+            'class_routine': class_routine,
+            'announcement': announcement,
         }
         return render(request, "staff_template/hod_dashboard.html", context)
 
