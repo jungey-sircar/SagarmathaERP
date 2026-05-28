@@ -217,22 +217,29 @@ class StudentResult(models.Model):
 
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        if instance.user_type == 1:
-            Admin.objects.create(admin=instance)
-        if instance.user_type == 2:
-            Staff.objects.create(admin=instance)
-        if instance.user_type == 3:
-            Student.objects.create(admin=instance)
+    if not created:
+        return
+
+    user_type = str(instance.user_type)
+    if user_type == '1':
+        Admin.objects.get_or_create(admin=instance)
+    if user_type == '2':
+        Staff.objects.get_or_create(admin=instance)
+    if user_type == '3':
+        Student.objects.get_or_create(admin=instance)
 
 
 @receiver(post_save, sender=CustomUser)
 def save_user_profile(sender, instance, **kwargs):
-    if instance.user_type == 1:
-        instance.admin.save()
-    if instance.user_type == 2:
-        instance.staff.save()
-    if instance.user_type == 3:
-        instance.student.save()
+    user_type = str(instance.user_type)
+    if user_type == '1':
+        profile, _ = Admin.objects.get_or_create(admin=instance)
+        profile.save()
+    if user_type == '2':
+        profile, _ = Staff.objects.get_or_create(admin=instance)
+        profile.save()
+    if user_type == '3':
+        profile, _ = Student.objects.get_or_create(admin=instance)
+        profile.save()
 
 # todos
