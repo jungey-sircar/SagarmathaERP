@@ -48,7 +48,11 @@
             </label>
             
             <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
-            <img src="{{ user.profile_pic.url }}" alt="User Avatar" class="user-avatar">
+            {% if user.profile_pic %}
+                <img src="{{ user.profile_pic.url }}" alt="User Avatar" class="user-avatar">
+            {% else %}
+                <img src="{% static 'image/favicon1.ico' %}" alt="User Avatar" class="user-avatar">
+            {% endif %}
         </div>
     </nav>
 
