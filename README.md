@@ -1,15 +1,15 @@
 <div align="center">
 
-# 🎓 College ERP System
+# 🎓 Sagarmatha College ERP System
 
 ### Enterprise Resource Planning Solution for Educational Institutions
 
-[![Stars](https://img.shields.io/github/stars/Ansarimajid/College-ERP?style=for-the-badge&logo=github)](https://github.com/Ansarimajid/College-ERP)
+[![Stars](https://img.shields.io/github/stars/eric-for-president/sagarmathaERPDemo?style=for-the-badge&logo=github)](https://github.com/eric-for-president/sagarmathaERPDemo)
 [![Python](https://img.shields.io/badge/Python-3.x-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-Framework-green?style=for-the-badge&logo=django)](https://www.djangoproject.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-[Live Demo](https://syncx.pythonanywhere.com) • [Report Bug](https://github.com/Ansarimajid/College-ERP/issues) • [Request Feature](https://github.com/Ansarimajid/College-ERP/issues)
+[Live Demo](https://secure-cliffs-24409-ffc3c20f4001.herokuapp.com/) • [Report Bug](https://github.com/eric-for-president/sagarmathaERPDemo/issues) • [Request Feature](https://github.com/eric-for-president/sagarmathaERPDemo/issues)
 
 </div>
 
@@ -31,7 +31,7 @@
 
 ## 🎯 About
 
-**College ERP** is a comprehensive Enterprise Resource Planning system designed specifically for educational institutions. Built with Python and Django, this full-stack web application streamlines administrative tasks, student management, and staff operations in one unified platform.
+**Sagarmatha College ERP** is a comprehensive Enterprise Resource Planning system designed specifically for educational institutions. Built with Python and Django, this full-stack web application streamlines administrative tasks, student management, and staff operations in one unified platform.
 
 ### ✨ Why Choose This ERP?
 
@@ -93,7 +93,7 @@
 ## 🔑 Demo Credentials
 
 ### 🌐 Live Demo
-Visit: **[https://syncx.pythonanywhere.com](https://syncx.pythonanywhere.com)** (v2.0.0)
+Visit: **[https://secure-cliffs-24409-ffc3c20f4001.herokuapp.com/](https://secure-cliffs-24409-ffc3c20f4001.herokuapp.com/)**
 
 ### Login Details
 
@@ -112,7 +112,7 @@ Visit: **[https://syncx.pythonanywhere.com](https://syncx.pythonanywhere.com)** 
 | **Frontend** | HTML5, CSS3, JavaScript, Bootstrap |
 | **Database** | SQLite (Development), PostgreSQL (Production Ready) |
 | **Authentication** | Django Auth, Google reCAPTCHA |
-| **Deployment** | PythonAnywhere |
+| **Deployment** | Heroku |
 
 ---
 
@@ -131,8 +131,8 @@ Ensure you have the following installed:
 #### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/Ansarimajid/College-ERP.git
-cd College-ERP
+git clone https://github.com/eric-for-president/sagarmathaERPDemo.git
+cd sagarmathaERPDemo
 ```
 
 #### 2️⃣ Create Virtual Environment
@@ -291,8 +291,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Having issues? Need help?
 
 - 📧 **Email:** [ansmajidali@gmail.com](mailto:ansmajidali@gmail.com)
-- 🐛 **Issues:** [GitHub Issues](https://github.com/Ansarimajid/College-ERP/issues)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/Ansarimajid/College-ERP/discussions)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/eric-for-president/sagarmathaERPDemo/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/eric-for-president/sagarmathaERPDemo/discussions)
 
 ---
 
@@ -300,11 +300,12 @@ Having issues? Need help?
 
 ### ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Ansarimajid/College-ERP&type=Date)](https://star-history.com/#Ansarimajid/College-ERP&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=eric-for-president/sagarmathaERPDemo&type=Date)](https://star-history.com/#eric-for-president/sagarmathaERPDemo&Date)
 
 **Made with ❤️ by [Ansari Majid](https://github.com/Ansarimajid)**
 
 *If this project helped you, consider giving it a star! ⭐*
 
-</div>#   s a g a r m a t h a E R P D e m o  
+</div>#   s a g a r m a t h a E R P D e m o 
+ 
  
