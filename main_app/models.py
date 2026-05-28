@@ -117,8 +117,15 @@ class IssuedBook(models.Model):
 
 
 class Staff(models.Model):
+    STAFF_ROLE = (
+        ('staff', 'Staff'),
+        ('hod', 'Head of Department'),
+        ('coordinator', 'Coordinator'),
+    )
     course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, null=True, blank=False)
     admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    role = models.CharField(max_length=20, choices=STAFF_ROLE, default='staff')
+    role_detail = models.CharField(max_length=120, blank=True, default='')
 
     def __str__(self):
         return self.admin.first_name + " " +  self.admin.last_name

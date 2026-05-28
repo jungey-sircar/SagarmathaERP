@@ -76,13 +76,29 @@ class AdminForm(CustomUserForm):
 
 
 class StaffForm(CustomUserForm):
+    staff_role = forms.ChoiceField(choices=Staff.STAFF_ROLE, label='Staff Role')
+    role_detail = forms.CharField(required=False, label='Department / Coordination Area')
+
     def __init__(self, *args, **kwargs):
         super(StaffForm, self).__init__(*args, **kwargs)
+        self.fields['course'].label = 'Department / Faculty'
+        self.fields['role_detail'].help_text = 'Required for coordinators. Example: Academic, Sports, Exam, Discipline.'
+        if self.instance and getattr(self.instance, 'pk', None):
+            self.fields['staff_role'].initial = self.instance.role
+            self.fields['role_detail'].initial = self.instance.role_detail
 
     class Meta(CustomUserForm.Meta):
         model = Staff
         fields = CustomUserForm.Meta.fields + \
             ['course' ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        staff_role = cleaned_data.get('staff_role')
+        role_detail = cleaned_data.get('role_detail')
+        if staff_role == 'coordinator' and not role_detail:
+            self.add_error('role_detail', 'Please enter the coordination area for this coordinator.')
+        return cleaned_data
 
 
 class CourseForm(FormSettings):

@@ -21,6 +21,8 @@
                                     <th>Full Name</th>
                                     <th>Email</th>
                                     <th>Gender</th>
+                                    <th>Role</th>
+                                    <th>Department / Area</th>
                                     <th>Course</th>
                                     <th>Avatar</th>
                                     <th>Actions</th>
@@ -33,6 +35,8 @@
                                     <td>{{staff.last_name}}, {{staff.first_name}}</td>
                                     <td>{{staff.email}}</td>
                                     <td>{{staff.gender}}</td>
+                                    <td>{{ staff.staff.get_role_display }}</td>
+                                    <td>{{ staff.staff.role_detail|default:'-' }}</td>
                                     <td>{{staff.staff.course.name}}</td>
                                     <td>
                                         {% if staff.profile_pic == ""  %}

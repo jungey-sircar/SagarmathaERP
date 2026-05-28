@@ -126,6 +126,8 @@ def add_staff(request):
             gender = form.cleaned_data.get('gender')
             password = form.cleaned_data.get('password')
             course = form.cleaned_data.get('course')
+            staff_role = form.cleaned_data.get('staff_role')
+            role_detail = form.cleaned_data.get('role_detail')
             passport = request.FILES.get('profile_pic')
             fs = FileSystemStorage()
             filename = fs.save(passport.name, passport)
@@ -135,6 +137,8 @@ def add_staff(request):
                     email=email, password=password, user_type=2, first_name=first_name, last_name=last_name, profile_pic=passport_url)
                 user.gender = gender
                 user.address = address
+                user.staff.role = staff_role
+                user.staff.role_detail = role_detail
                 user.staff.course = course
                 user.save()
                 messages.success(request, "Successfully Added")
@@ -235,7 +239,7 @@ def add_subject(request):
 
 
 def manage_staff(request):
-    allStaff = CustomUser.objects.filter(user_type=2)
+    allStaff = CustomUser.objects.filter(user_type=2).select_related('staff', 'staff__course')
     context = {
         'allStaff': allStaff,
         'page_title': 'Manage Staff'
@@ -283,15 +287,15 @@ def edit_staff(request, staff_id):
             first_name = form.cleaned_data.get('first_name')
             last_name = form.cleaned_data.get('last_name')
             address = form.cleaned_data.get('address')
-            username = form.cleaned_data.get('username')
             email = form.cleaned_data.get('email')
             gender = form.cleaned_data.get('gender')
             password = form.cleaned_data.get('password') or None
             course = form.cleaned_data.get('course')
+            staff_role = form.cleaned_data.get('staff_role')
+            role_detail = form.cleaned_data.get('role_detail')
             passport = request.FILES.get('profile_pic') or None
             try:
                 user = CustomUser.objects.get(id=staff.admin.id)
-                user.username = username
                 user.email = email
                 if password != None:
                     user.set_password(password)
@@ -305,6 +309,8 @@ def edit_staff(request, staff_id):
                 user.gender = gender
                 user.address = address
                 staff.course = course
+                staff.role = staff_role
+                staff.role_detail = role_detail
                 user.save()
                 staff.save()
                 messages.success(request, "Successfully Updated")

@@ -14,8 +14,50 @@ from datetime import date
 
 def staff_home(request):
     staff = get_object_or_404(Staff, admin=request.user)
-    total_students = Student.objects.filter(course=staff.course).count()
     total_leave = LeaveReportStaff.objects.filter(staff=staff).count()
+
+    if staff.role == 'hod':
+        department_subjects = Subject.objects.filter(course=staff.course)
+        department_students = Student.objects.filter(course=staff.course)
+        department_staff = Staff.objects.filter(course=staff.course)
+        attendance_list = []
+        subject_list = []
+        for subject in department_subjects:
+            attendance_list.append(Attendance.objects.filter(subject=subject).count())
+            subject_list.append(subject.name)
+
+        context = {
+            'page_title': 'HOD Dashboard',
+            'staff_name': staff.admin.get_full_name() or staff.admin.first_name,
+            'role_title': 'Head of Department',
+            'role_detail': staff.role_detail or staff.course.name,
+            'department_name': staff.course.name if staff.course else 'Unassigned',
+            'total_students': department_students.count(),
+            'total_staff': department_staff.count(),
+            'total_subject': department_subjects.count(),
+            'total_attendance': Attendance.objects.filter(subject__in=department_subjects).count(),
+            'total_leave': total_leave,
+            'subject_list': subject_list,
+            'attendance_list': attendance_list,
+        }
+        return render(request, "staff_template/hod_dashboard.html", context)
+
+    if staff.role == 'coordinator':
+        department_students = Student.objects.filter(course=staff.course)
+        department_subjects = Subject.objects.filter(course=staff.course)
+        context = {
+            'page_title': 'Coordinator Dashboard',
+            'staff_name': staff.admin.get_full_name() or staff.admin.first_name,
+            'role_title': 'Coordinator',
+            'role_detail': staff.role_detail or 'General Coordination',
+            'department_name': staff.course.name if staff.course else 'Unassigned',
+            'total_students': department_students.count(),
+            'total_subject': department_subjects.count(),
+            'total_leave': total_leave,
+        }
+        return render(request, "staff_template/coordinator_dashboard.html", context)
+
+    total_students = Student.objects.filter(course=staff.course).count()
     subjects = Subject.objects.filter(staff=staff)
     total_subject = subjects.count()
     attendance_list = Attendance.objects.filter(subject__in=subjects)
@@ -33,7 +75,9 @@ def staff_home(request):
         'total_leave': total_leave,
         'total_subject': total_subject,
         'subject_list': subject_list,
-        'attendance_list': attendance_list
+        'attendance_list': attendance_list,
+        'staff_role': staff.role,
+        'role_detail': staff.role_detail,
     }
     return render(request, "staff_template/erpnext_staff_home.html", context)
 
