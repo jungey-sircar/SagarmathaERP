@@ -12,20 +12,52 @@ from .models import *
 from . import forms, models
 from datetime import date
 
+
+def _role_text(role_name):
+    return (role_name or '').strip().lower()
+
+
+def _role_matches(role_name, keywords):
+    role_text = _role_text(role_name)
+    return any(keyword in role_text for keyword in keywords)
+
+
+def _is_hod_role(role_name):
+    role_text = _role_text(role_name)
+    return role_text.startswith('hod') or 'head of department' in role_text
+
+
+def _is_coordinator_role(role_name):
+    return _role_matches(role_name, ['co-ordinator', 'coordinator', 'department coordinator', 'coordination'])
+
+
+def _is_academic_incharge_role(role_name):
+    return _role_matches(role_name, ['academic incharge', 'academic in-charge', 'academic coordinator', 'exam incharge', 'exam in-charge'])
+
+
+def _is_teacher_role(role_name):
+    return _role_matches(role_name, ['teacher', 'lecturer', 'assistant teacher', 'senior teacher', 'subject teacher'])
+
+
+def _department_context(staff):
+    department_subjects = Subject.objects.filter(course=staff.course)
+    department_students = Student.objects.filter(course=staff.course)
+    department_staff = Staff.objects.filter(course=staff.course)
+    attendance_list = []
+    subject_list = []
+    for subject in department_subjects:
+        attendance_list.append(Attendance.objects.filter(subject=subject).count())
+        subject_list.append(subject.name)
+
+    return department_subjects, department_students, department_staff, subject_list, attendance_list
+
 def staff_home(request):
     staff = get_object_or_404(Staff, admin=request.user)
     total_leave = LeaveReportStaff.objects.filter(staff=staff).count()
-    role_text = (staff.role or '').strip().lower()
+    role_text = _role_text(staff.role)
 
-    if role_text.startswith('hod') or 'head of department' in role_text:
-        department_subjects = Subject.objects.filter(course=staff.course)
-        department_students = Student.objects.filter(course=staff.course)
-        department_staff = Staff.objects.filter(course=staff.course)
-        attendance_list = []
-        subject_list = []
-        for subject in department_subjects:
-            attendance_list.append(Attendance.objects.filter(subject=subject).count())
-            subject_list.append(subject.name)
+    if _is_hod_role(role_text):
+        department_subjects, department_students, department_staff, subject_list, attendance_list = _department_context(staff)
 
         holiday_rows = [
             {'name': 'Janai Purnima [जनै पूर्णिमा]', 'from': '2082/04/24', 'to': '2082/04/24', 'remarks': 'Janai Purnima [जनै पूर्णिमा]'},
@@ -74,9 +106,8 @@ def staff_home(request):
         }
         return render(request, "staff_template/hod_dashboard.html", context)
 
-    if 'coordinator' in role_text or 'co-ordinator' in role_text:
-        department_students = Student.objects.filter(course=staff.course)
-        department_subjects = Subject.objects.filter(course=staff.course)
+    if _is_coordinator_role(role_text):
+        department_subjects, department_students, _, subject_list, attendance_list = _department_context(staff)
         context = {
             'page_title': 'Coordinator Dashboard',
             'staff_name': staff.admin.get_full_name() or staff.admin.first_name,
@@ -86,8 +117,60 @@ def staff_home(request):
             'total_students': department_students.count(),
             'total_subject': department_subjects.count(),
             'total_leave': total_leave,
+            'subject_list': subject_list,
+            'attendance_list': attendance_list,
         }
         return render(request, "staff_template/coordinator_dashboard.html", context)
+
+    if _is_academic_incharge_role(role_text):
+        department_subjects, department_students, department_staff, subject_list, attendance_list = _department_context(staff)
+        subject_rows = [
+            {'name': subject_name, 'attendance': attendance_count}
+            for subject_name, attendance_count in zip(subject_list, attendance_list)
+        ]
+        context = {
+            'page_title': 'Academic Incharge Dashboard',
+            'staff_name': staff.admin.get_full_name() or staff.admin.first_name,
+            'role_title': staff.role,
+            'role_detail': staff.role_detail or 'Academic oversight',
+            'department_name': staff.course.name if staff.course else 'Unassigned',
+            'total_students': department_students.count(),
+            'total_staff': department_staff.count(),
+            'total_subject': department_subjects.count(),
+            'total_leave': total_leave,
+            'subject_list': subject_list,
+            'attendance_list': attendance_list,
+            'subject_rows': subject_rows,
+            'academic_focus': [
+                'Review subject coverage and course load',
+                'Monitor approvals and leave requests',
+                'Coordinate academic planning and deadlines',
+            ],
+        }
+        return render(request, "staff_template/academic_incharge_dashboard.html", context)
+
+    if _is_teacher_role(role_text):
+        total_students = Student.objects.filter(course=staff.course).count()
+        subjects = Subject.objects.filter(staff=staff)
+        total_subject = subjects.count()
+        attendance_list = Attendance.objects.filter(subject__in=subjects)
+        total_attendance = attendance_list.count()
+        attendance_list = []
+        subject_list = []
+        for subject in subjects:
+            attendance_count = Attendance.objects.filter(subject=subject).count()
+            subject_list.append(subject.name)
+            attendance_list.append(attendance_count)
+        context = {
+            'page_title': 'Teacher Dashboard',
+            'total_students': total_students,
+            'total_attendance': total_attendance,
+            'total_leave': total_leave,
+            'total_subject': total_subject,
+            'subject_list': subject_list,
+            'attendance_list': attendance_list,
+        }
+        return render(request, "staff_template/home_content.html", context)
 
     total_students = Student.objects.filter(course=staff.course).count()
     subjects = Subject.objects.filter(staff=staff)

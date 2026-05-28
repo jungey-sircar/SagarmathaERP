@@ -6,6 +6,21 @@ from .models import *
 from . import models
 
 
+ROLE_TITLE_PRESETS = [
+    'HOD',
+    'Co-ordinator',
+    'Academic Incharge',
+    'Teacher',
+    'Assistant Teacher',
+    'Senior Teacher',
+    'Lecturer',
+    'Lab Incharge',
+    'Exam Incharge',
+    'Library Incharge',
+    'Sports Incharge',
+]
+
+
 def _is_hod_role(role_name):
     role_text = (role_name or '').strip().lower()
     return role_text.startswith('hod') or 'head of department' in role_text
@@ -37,6 +52,7 @@ class CustomUserForm(FormSettings):
         if kwargs.get('instance'):
             instance = kwargs.get('instance').admin.__dict__
             self.fields['password'].required = False
+            self.fields['profile_pic'].required = False
             for field in CustomUserForm.Meta.fields:
                 self.fields[field].initial = instance.get(field)
             if self.instance.pk is not None:
@@ -88,9 +104,9 @@ class StaffForm(CustomUserForm):
     def __init__(self, *args, **kwargs):
         super(StaffForm, self).__init__(*args, **kwargs)
         self.fields['course'].label = 'Department / Faculty'
-        self.fields['staff_role'].help_text = 'Type any role, for example: Teacher, HOD of Maths, Inventory Incharge, Sports Coordinator.'
+        self.fields['staff_role'].help_text = 'Choose a preset role or type a custom one. Examples: HOD, Co-ordinator, Academic Incharge, Teacher.'
         self.fields['staff_role'].widget.attrs.update({
-            'placeholder': 'Enter custom role title',
+            'placeholder': 'Select or type a role title',
             'list': 'role-options',
         })
         self.fields['role_detail'].help_text = 'Optional role scope or area. Example: Academic, Sports, Exam, Library.'
@@ -98,7 +114,7 @@ class StaffForm(CustomUserForm):
         role_suggestions = list(
             Staff.objects.exclude(role__exact='').values_list('role', flat=True).distinct().order_by('role')
         )
-        self.role_suggestions = role_suggestions
+        self.role_suggestions = list(dict.fromkeys(ROLE_TITLE_PRESETS + role_suggestions))
 
         if self.instance and getattr(self.instance, 'pk', None):
             self.fields['staff_role'].initial = self.instance.role
