@@ -560,15 +560,21 @@ def change_password(request):
 
 def payslip_pdf(request, payslip_id):
     payslip = get_object_or_404(Payslip, id=payslip_id)
-    # Authorization: staff can download only their own; HOD can download any
+    # Authorization: staff can download only their own; HOD + Accountant + Admin
+    # roles can download anyone's.
     requester_staff = _staff(request)
-    if (requester_staff is None) or (
-        payslip.staff_id != requester_staff.id
-        and (requester_staff.role or '').strip().lower().startswith('hod') is False
-    ):
-        # Allow user_type=1 (admin) too
-        if request.user.user_type != '1':
-            return HttpResponse('Forbidden', status=403)
+    role_lower = (requester_staff.role or '').strip().lower() if requester_staff else ''
+    is_privileged = (
+        role_lower.startswith('hod')
+        or 'head of department' in role_lower
+        or 'accountant' in role_lower
+        or 'finance' in role_lower
+    )
+    if request.user.user_type == '1':
+        is_privileged = True
+    own_payslip = bool(requester_staff and payslip.staff_id == requester_staff.id)
+    if not (is_privileged or own_payslip):
+        return HttpResponse('Forbidden', status=403)
 
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=18*mm, rightMargin=18*mm,

@@ -40,10 +40,18 @@
 - **`seed_demo`** extended with sample Kaaj, Optional Holiday, Substitute, 2 Store Requisitions, Assignment, Study Material, Lesson Plan, Assessment Mark and BookLoan.
 - **Nepali calendar block on HOD dashboard left untouched** — re-verified by automated tests, devanagari rows render.
 
+### Iteration 4 — Per-role dashboards + holiday range
+- Holiday service now filters to BS range **2083/02/15 → 2084/03/32** and renders the heading **"Holidays from 2083/02/15 to 2084/03/32"** exactly as requested.
+- `staff_views.staff_home` now branches on role to **7 distinct dashboards**: Admin (already existed), HOD (`hod_dashboard.html`), Teacher (`home_content.html`), Coordinator, Academic Incharge, **Store Manager** (`store_manager_dashboard.html` — Total Items / Total Quantity / Low Stock Alerts / Pending Requisitions + Low Stock + Recent Requisitions tables), **Accountant** (`accountant_dashboard.html` — Total Payslips / Paid / Pending / Total Payroll NPR + Recent Payslips with PDF download + Quick Actions), **Library Admin** (`library_admin_dashboard.html` — Total Books / Active Loans / Overdue / Returned + Active Loans + Recent Returns), Student.
+- New role helpers: `_is_store_manager_role`, `_is_accountant_role`, `_is_library_admin_role` in `staff_views.py` (substring match).
+- `payslip_pdf` authorization extended to include Accountant + Finance roles in addition to HOD/Admin.
+- `seed_demo` now creates 3 additional staff users (Bishal Maharjan/Store Manager, Sabina Pradhan/Accountant, Sujan Bhattarai/Librarian) so each dashboard is testable end-to-end.
+
 ## Test verification
 - iteration_1.json: 100% pass.
-- iteration_2.json: ~98% pass (only cosmetic note). 21 functional flows verified end-to-end.
-- iteration_3.json: **100% pass (9/9 acceptance criteria)**. P2 + cosmetic features verified: high-contrast top-pill borders (slate-700), checkbox column + bulk-promote on Admissions, console email send with full RFC-822 message, forced-password-change middleware redirect loop, change-password form with banner + min-length validation, Payslip PDF generation (ReportLab, valid `%PDF-1.4` binary with `attachment; filename=payslip_<last>_<yr>_<mo>.pdf`).
+- iteration_2.json: ~98% pass.
+- iteration_3.json: 100% pass (9/9).
+- iteration_4.json: 87.5% on first run (one specific authorization bug: Accountant couldn't download payslip PDFs → fixed by adding Accountant/Finance roles to `payslip_pdf` allow-list). Manual retest after fix: HTTP 200, valid `%PDF-1.4` binary served to Accountant — issue resolved.
 
 ### Iteration 3 — P2 + cosmetic polish
 - **`CustomUser.must_change_password`** field + migration 0010; middleware loops every authenticated request to `/account/change-password/` until cleared.
