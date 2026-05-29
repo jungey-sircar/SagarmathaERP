@@ -16,12 +16,55 @@
                     <h3 class="mb-1 text-dark">Dashboard</h3>
                     <p class="mb-0 text-muted">Head of Department overview for faculty coordination, approvals, and academic monitoring.</p>
                 </div>
-                <div class="text-end mt-3 mt-md-0">
-                    <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded" style="background:#0b5cab;color:#fff;">
-                        <small class="text-uppercase fw-semibold">Modules</small>
-                        <strong>Dashboard</strong>
-                    </div>
-                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <a href="{% url 'staff_home' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Dashboard</a>
+            <a href="{% url 'staff_view_profile' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Profile</a>
+            <a href="{% url 'admin_view_attendance' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Attendance</a>
+
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Leave/Kaaj
+                </button>
+                <ul class="dropdown-menu shadow-sm">
+                    <li><a class="dropdown-item" href="{% url 'leave_balance' %}">Leave Balance</a></li>
+                    <li><a class="dropdown-item" href="{% url 'staff_apply_leave' %}">Apply Leave</a></li>
+                    <li><a class="dropdown-item" href="{% url 'view_staff_leave' %}">Clearance Requests</a></li>
+                </ul>
+            </div>
+
+            <a href="{% url 'payslip_dashboard' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Payslip</a>
+            <a href="{% url 'store_dashboard' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Store</a>
+            <a href="{% url 'books_in_hand' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Library</a>
+
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Academic
+                </button>
+                <ul class="dropdown-menu shadow-sm">
+                    <li><a class="dropdown-item" href="{% url 'academic_dashboard' %}">Overview</a></li>
+                    <li><a class="dropdown-item" href="{% url 'manage_course' %}">Manage Faculties / Departments</a></li>
+                    <li><a class="dropdown-item" href="{% url 'manage_subject' %}">Manage Subjects</a></li>
+                    <li><a class="dropdown-item" href="{% url 'manage_student' %}">Manage Students</a></li>
+                </ul>
+            </div>
+
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Others
+                </button>
+                <ul class="dropdown-menu shadow-sm">
+                    <li><a class="dropdown-item" href="{% url 'others_dashboard' %}">Overview</a></li>
+                    <li><a class="dropdown-item" href="{% url 'student_feedback_message' %}">Student Feedback</a></li>
+                    <li><a class="dropdown-item" href="{% url 'staff_feedback_message' %}">Staff Feedback</a></li>
+                    <li><a class="dropdown-item" href="{% url 'staff_view_notification' %}">Notifications</a></li>
+                </ul>
             </div>
         </div>
     </div>
@@ -29,6 +72,7 @@
 
 <div class="row g-3">
     <div class="col-lg-3 col-md-6">
+        <a href="{% url 'view_staff_leave' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Clearance Request</div>
@@ -38,6 +82,7 @@
                 </div>
             </div>
         </div>
+        </a>
     </div>
                 <style>
                     .invalid{
@@ -54,6 +99,7 @@
                 </style>
 
     <div class="col-lg-3 col-md-6">
+        <a href="{% url 'books_in_hand' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Library</div>
@@ -64,8 +110,10 @@
                 <div class="small text-muted">in hand</div>
             </div>
         </div>
+        </a>
     </div>
     <div class="col-lg-3 col-md-6">
+        <a href="{% url 'leave_balance' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Leave Balance</div>
@@ -75,8 +123,10 @@
                 </div>
             </div>
         </div>
+        </a>
     </div>
     <div class="col-lg-3 col-md-6">
+        <a href="{% url 'view_staff_leave' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -87,11 +137,13 @@
                 <div class="small text-muted">Leave Request pending</div>
             </div>
         </div>
+        </a>
     </div>
 </div>
 
 <div class="row g-3 mt-0">
     <div class="col-lg-3 col-md-6">
+        <a href="{% url 'leave_balance' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -102,8 +154,10 @@
                 <div class="small text-muted">Optional Holiday</div>
             </div>
         </div>
+        </a>
     </div>
     <div class="col-lg-3 col-md-6">
+        <a href="{% url 'books_in_hand' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -114,8 +168,10 @@
                 <div class="small text-muted">Kaaj/Tour</div>
             </div>
         </div>
+        </a>
     </div>
     <div class="col-lg-3 col-md-6">
+        <a href="{% url 'view_student_leave' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -126,8 +182,10 @@
                 <div class="small text-muted">Store Requisitions</div>
             </div>
         </div>
+        </a>
     </div>
     <div class="col-lg-3 col-md-6">
+        <a href="{% url 'view_student_leave' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -138,6 +196,7 @@
                 <div class="small text-muted">Substitute/Extra Work Days</div>
             </div>
         </div>
+        </a>
     </div>
 </div>
 
@@ -145,36 +204,84 @@
     <div class="col-lg-7">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-header bg-white border-bottom-0 pb-0">
-                <h5 class="mb-0">Holidays from 2082/04/01 to 2083/03/32</h5>
+                <h5 class="mb-0">{{ holiday_period_label|default:'Holidays' }}</h5>
                 <ul class="nav nav-tabs card-header-tabs mt-3">
-                    <li class="nav-item"><a class="nav-link active" href="#">Holidays</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Optional Holidays</a></li>
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#hod-holidays">Holidays</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#hod-optional-holidays">Optional Holidays</a></li>
                 </ul>
             </div>
             <div class="card-body pt-3">
-                <div class="table-responsive" style="max-height: 240px; overflow: auto;">
-                    <table class="table table-sm table-bordered mb-0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>From</th>
-                                <th>To</th>
-                                <th>Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in holiday_rows %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ row.name }}</td>
-                                <td>{{ row.from }}</td>
-                                <td>{{ row.to }}</td>
-                                <td>{{ row.remarks }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="hod-holidays">
+                        <div class="table-responsive holiday-table-scroll" style="max-height: 240px; overflow: auto;">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Date</th>
+                                        <th>Holiday Name</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in holiday_rows %}
+                                    {% if holiday_scroll_anchor and row.from == holiday_scroll_anchor %}
+                                    <tr id="holiday-scroll-anchor" data-anchor-date="{{ holiday_scroll_anchor }}">
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ row.from }}</td>
+                                        <td>{{ row.name }}</td>
+                                        <td>{{ row.remarks }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ row.from }}</td>
+                                        <td>{{ row.name }}</td>
+                                        <td>{{ row.remarks }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No holiday data available.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="hod-optional-holidays">
+                        <div class="table-responsive holiday-table-scroll" style="max-height: 240px; overflow: auto;">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Date</th>
+                                        <th>Holiday Name</th>
+                                        <th>Remarks</th>
+                                        <th>Apply</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in optional_holiday_rows %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ row.from }}</td>
+                                        <td>{{ row.name }}</td>
+                                        <td>{{ row.remarks }}</td>
+                                        <td>
+                                            <a href="{% url 'staff_apply_leave' %}" class="btn btn-sm btn-outline-primary">Apply</a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No optional holidays available.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -215,3 +322,18 @@
     </div>
 </div>
 {% endblock content %}
+
+{% block custom_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const anchor = document.querySelector('#holiday-scroll-anchor');
+        if (anchor) {
+            const scrollContainer = anchor.closest('.holiday-table-scroll');
+            if (scrollContainer) {
+                anchor.scrollIntoView({ block: 'start', inline: 'nearest' });
+            }
+        }
+    });
+</script>
+{% endblock custom_js %}
+

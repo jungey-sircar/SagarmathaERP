@@ -392,33 +392,74 @@
     <div class="row g-3">
         <div class="col-lg-7">
             <div class="panel-card">
-                <div class="panel-title">Holidays from 2026/04/01 to 2026/12/31</div>
+                <div class="panel-title">{{ holiday_period_label|default:'Holidays' }}</div>
                 <div class="tab-strip">
-                    <button class="active" type="button">Holidays</button>
-                    <button type="button">Optional Holidays</button>
+                    <button class="active" type="button" data-bs-toggle="tab" data-bs-target="#hod-holidays">Holidays</button>
+                    <button type="button" data-bs-toggle="tab" data-bs-target="#hod-optional-holidays">Optional Holidays</button>
                 </div>
-                <table class="dashboard-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>From</th>
-                            <th>To</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in holiday_rows %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ row.name }}</td>
-                            <td>{{ row.from }}</td>
-                            <td>{{ row.to }}</td>
-                            <td>{{ row.remarks }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+                <!-- Holidays and Optional Holidays Tabs -->
+                <div class="tab-content">
+                    <!-- Holidays Tab -->
+                    <div class="tab-pane fade show active" id="hod-holidays">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Holiday Name</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in holiday_rows %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ row.from }}</td>
+                                    <td>{{ row.name }}</td>
+                                    <td>{{ row.remarks }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center" style="color: #6b7280; padding: 20px;">No holiday data available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Optional Holidays Tab -->
+                    <div class="tab-pane fade" id="hod-optional-holidays">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Holiday Name</th>
+                                    <th>Remarks</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in optional_holiday_rows %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ row.from }}</td>
+                                    <td>{{ row.name }}</td>
+                                    <td>{{ row.remarks }}</td>
+                                    <td>
+                                        <a href="{% url 'staff_apply_leave' %}" class="btn btn-sm btn-outline-primary" style="border: 1px solid #0f4c81; color: #0f4c81; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 700;">Apply</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center" style="color: #6b7280; padding: 20px;">No optional holidays available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 

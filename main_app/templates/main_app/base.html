@@ -39,6 +39,23 @@
         </div>
         
         <div class="navbar-user">
+            {% if user.is_authenticated and user.user_type == '2' %}
+            <div class="dropdown ms-3">
+                <button class="btn btn-sm btn-info dropdown-toggle text-white fw-semibold" type="button" id="modulesDropdown" aria-expanded="false" aria-haspopup="true">
+                    <i class="fas fa-th-large me-1"></i> Modules
+                </button>
+                <ul class="dropdown-menu shadow-sm border-0 mt-2 dropdown-menu-end" id="modulesDropdownMenu" aria-labelledby="modulesDropdown" style="min-width: 220px; display: none; z-index: 2000; position: absolute; right: 0; left: auto;">
+                    <li><a class="dropdown-item py-2" href="{% url 'staff_home' %}">Self Service</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'add_student' %}">Pre Admissions</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'manage_student' %}">Admissions</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'admin_view_attendance' %}">Examination</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'manage_staff' %}">Human Resource</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'admin_view_attendance' %}">Attendance</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'store_dashboard' %}">Inventory</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'books_in_hand' %}">Library</a></li>
+                </ul>
+            </div>
+            {% endif %}
             <!-- Dark Mode Toggle -->
             <label class="theme-toggle" for="theme-switch">
                 <input type="checkbox" id="theme-switch" />
@@ -237,6 +254,29 @@
                     }
                 }, 5000);
             });
+        });
+
+        // Modules dropdown toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const modulesButton = document.getElementById('modulesDropdown');
+            const modulesMenu = document.getElementById('modulesDropdownMenu');
+
+            if (modulesButton && modulesMenu) {
+                modulesButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const isOpen = modulesMenu.style.display === 'block';
+                    modulesMenu.style.display = isOpen ? 'none' : 'block';
+                    modulesButton.setAttribute('aria-expanded', String(!isOpen));
+                });
+
+                document.addEventListener('click', function(event) {
+                    if (!modulesButton.contains(event.target) && !modulesMenu.contains(event.target)) {
+                        modulesMenu.style.display = 'none';
+                        modulesButton.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
         });
         
         // Dark mode toggle functionality

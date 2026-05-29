@@ -10,9 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
-import dj_database_url
 import os
 from pathlib import Path
+
+try:
+    import dj_database_url
+except ModuleNotFoundError:
+    dj_database_url = None
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -158,6 +162,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 AUTH_USER_MODEL = 'main_app.CustomUser'
 AUTHENTICATION_BACKENDS = ['main_app.EmailBackend.EmailBackend']
 TIME_ZONE = 'Asia/Kolkata'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Session Configuration for Remember Me functionality
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds (default)
@@ -181,15 +186,25 @@ RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY', '')
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-prod_db = dj_database_url.config(conn_max_age=500)
-if prod_db:
-    DATABASES['default'].update(prod_db)
+if dj_database_url is not None:
+    prod_db = dj_database_url.config(conn_max_age=500)
+    if prod_db:
+        DATABASES['default'].update(prod_db)
 
 # Django REST framework + JWT settings
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+try:
+    import rest_framework_simplejwt  # noqa: F401
+    DEFAULT_AUTH_CLASSES = (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    )
+except ModuleNotFoundError:
+    DEFAULT_AUTH_CLASSES = (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    )
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': DEFAULT_AUTH_CLASSES,
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),

@@ -242,12 +242,12 @@ class StaffEditForm(CustomUserForm):
 
 
 class EditResultForm(FormSettings):
-    session_list = Session.objects.all()
     session_year = forms.ModelChoiceField(
-        label="Session Year", queryset=session_list, required=True)
+        label="Session Year", queryset=Session.objects.none(), required=True)
 
     def __init__(self, *args, **kwargs):
         super(EditResultForm, self).__init__(*args, **kwargs)
+        self.fields['session_year'].queryset = Session.objects.all()
 
     class Meta:
         model = StudentResult
@@ -262,8 +262,14 @@ class EditResultForm(FormSettings):
 #issue book
 
 class IssueBookForm(forms.Form):
-    isbn2 = forms.ModelChoiceField(queryset=models.Book.objects.all(), empty_label="Book Name [ISBN]", to_field_name="isbn", label="Book (Name and ISBN)")
-    name2 = forms.ModelChoiceField(queryset=models.Student.objects.all(), empty_label="Name ", to_field_name="", label="Student Details")
-    
+    isbn2 = forms.ModelChoiceField(queryset=models.Book.objects.none(), empty_label="Book Name [ISBN]", to_field_name="isbn", label="Book (Name and ISBN)")
+    name2 = forms.ModelChoiceField(queryset=models.Student.objects.none(), empty_label="Name ", to_field_name="", label="Student Details")
+
     isbn2.widget.attrs.update({'class': 'form-control'})
     name2.widget.attrs.update({'class':'form-control'})
+
+    def __init__(self, *args, **kwargs):
+        super(IssueBookForm, self).__init__(*args, **kwargs)
+        self.fields['isbn2'].queryset = models.Book.objects.all()
+        self.fields['name2'].queryset = models.Student.objects.all()
+
