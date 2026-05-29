@@ -33,8 +33,24 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'f2zx8*lb*em*-*b+!&1lpp&$_9q9kmkar+l3x
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get(
-    'ALLOWED_HOSTS', 'localhost,127.0.0.1,.herokuapp.com'
+    'ALLOWED_HOSTS', 'localhost,127.0.0.1,.herokuapp.com,*'
 ).split(',') if host.strip()]
+
+# Trust the Emergent preview / deployment domains and any custom origins so
+# CSRF protection does not block legitimate logins behind the ingress proxy.
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        'CSRF_TRUSTED_ORIGINS',
+        'https://*.preview.emergentagent.com,'
+        'https://*.preview.emergentcf.cloud,'
+        'https://*.emergentagent.com,'
+        'https://*.emergent.host,'
+        'http://localhost:3000,http://127.0.0.1:3000,'
+        'http://localhost:8001,http://127.0.0.1:8001'
+    ).split(',')
+    if origin.strip()
+]
 
 
 # Application definition

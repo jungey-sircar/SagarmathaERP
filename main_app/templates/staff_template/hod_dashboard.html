@@ -157,7 +157,7 @@
         </a>
     </div>
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'books_in_hand' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'pre_admissions' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -171,7 +171,7 @@
         </a>
     </div>
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'view_student_leave' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'store_dashboard' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -185,7 +185,7 @@
         </a>
     </div>
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'view_student_leave' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'view_staff_leave' %}" class="text-decoration-none text-reset">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -293,8 +293,11 @@
                 <h5 class="mb-0">Announcement</h5>
             </div>
             <div class="card-body">
+                {% if announcement_title %}<h6>{{ announcement_title }}</h6>{% endif %}
                 {% if announcement %}
                     <p class="mb-0">{{ announcement }}</p>
+                {% else %}
+                    <p class="text-muted mb-0">No announcements posted.</p>
                 {% endif %}
             </div>
         </div>

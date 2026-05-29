@@ -209,6 +209,117 @@ class StudentResult(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+class Admission(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    STAGE_CHOICES = (
+        ('inquiry', 'Pre-Admission Inquiry'),
+        ('admitted', 'Admitted'),
+    )
+    candidate_name = models.CharField(max_length=120)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
+    stage = models.CharField(max_length=12, choices=STAGE_CHOICES, default='inquiry')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    notes = models.TextField(blank=True)
+    applied_at = models.DateField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-applied_at']
+
+    def __str__(self):
+        return f"{self.candidate_name} ({self.get_stage_display()})"
+
+
+class Exam(models.Model):
+    STATUS_CHOICES = (
+        ('scheduled', 'Scheduled'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+    )
+    name = models.CharField(max_length=120)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    exam_date = models.DateField()
+    total_marks = models.PositiveIntegerField(default=100)
+    duration_minutes = models.PositiveIntegerField(default=180)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='scheduled')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-exam_date']
+
+    def __str__(self):
+        return f"{self.name} - {self.subject.name}"
+
+
+class InventoryItem(models.Model):
+    name = models.CharField(max_length=160)
+    category = models.CharField(max_length=80, default='General')
+    quantity = models.PositiveIntegerField(default=0)
+    unit = models.CharField(max_length=20, default='pcs')
+    location = models.CharField(max_length=120, blank=True)
+    reorder_level = models.PositiveIntegerField(default=5)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    @property
+    def is_low_stock(self):
+        return self.quantity <= self.reorder_level
+
+    def __str__(self):
+        return self.name
+
+
+class Payslip(models.Model):
+    MONTH_CHOICES = [(i, m) for i, m in enumerate(
+        ['January', 'February', 'March', 'April', 'May', 'June',
+         'July', 'August', 'September', 'October', 'November', 'December'], start=1
+    )]
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='payslips')
+    month = models.PositiveSmallIntegerField(choices=MONTH_CHOICES)
+    year = models.PositiveIntegerField()
+    basic_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    allowances = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    paid = models.BooleanField(default=False)
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-year', '-month']
+        unique_together = ('staff', 'month', 'year')
+
+    @property
+    def net_pay(self):
+        return (self.basic_salary or 0) + (self.allowances or 0) - (self.deductions or 0)
+
+    def __str__(self):
+        return f"{self.staff} - {self.get_month_display()} {self.year}"
+
+
+class Announcement(models.Model):
+    title = models.CharField(max_length=160)
+    body = models.TextField()
+    audience = models.CharField(
+        max_length=10,
+        choices=(('all', 'All'), ('staff', 'Staff'), ('students', 'Students')),
+        default='all',
+    )
+    published_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-published_at']
+
+    def __str__(self):
+        return self.title
+
+
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
     if not created:

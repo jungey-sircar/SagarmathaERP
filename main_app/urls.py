@@ -18,7 +18,7 @@ from django.urls import path
 
 from main_app.EditResultView import EditResultView
 
-from . import hod_views, staff_views, student_views, views
+from . import hod_views, module_views, staff_views, student_views, views
 
 urlpatterns = [
     path("", views.login_page, name="login_page"),
@@ -136,10 +136,16 @@ urlpatterns = [
     ),
     path("selfservice/books-in-hand/", views.books_in_hand, name="books_in_hand"),
     path("selfservice/leave-balance/", views.leave_balance, name="leave_balance"),
-    path("selfservice/payslip/", views.payslip_dashboard, name="payslip_dashboard"),
-    path("selfservice/store/", views.store_dashboard, name="store_dashboard"),
+    path("selfservice/payslip/", module_views.payslip, name="payslip_dashboard"),
+    path("selfservice/store/", module_views.store, name="store_dashboard"),
     path("selfservice/academic/", views.academic_dashboard, name="academic_dashboard"),
     path("selfservice/others/", views.others_dashboard, name="others_dashboard"),
+    # Modules
+    path("modules/pre-admissions/", module_views.pre_admissions, name="pre_admissions"),
+    path("modules/admissions/", module_views.admissions, name="admissions"),
+    path("modules/examination/", module_views.examination, name="examination"),
+    path("modules/human-resource/", module_views.human_resource, name="human_resource"),
+    path("modules/inventory/", module_views.inventory, name="inventory"),
     path(
         "staff/attendance/fetch/",
         staff_views.get_student_attendance,
