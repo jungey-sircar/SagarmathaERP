@@ -325,11 +325,27 @@ def _is_optional_holiday(row):
     return any(keyword.lower() in event_name for keyword in OPTIONAL_KEYWORDS)
 
 
+def _parse_bs_date(bs_string):
+    """Parse 'YYYY/MM/DD' BS string -> (year, month, day) tuple for sorting."""
+    try:
+        parts = bs_string.split("/")
+        return (int(parts[0]), int(parts[1]), int(parts[2]))
+    except (AttributeError, IndexError, ValueError):
+        return (0, 0, 0)
+
+
+def _in_range(bs_string, start_tuple, end_tuple):
+    return start_tuple <= _parse_bs_date(bs_string) <= end_tuple
+
+
 def get_nepali_holiday_dashboard_data(reference_date: date | None = None):
     current_bs_year = estimate_bs_year(reference_date)
     target_years = [current_bs_year]
     if current_bs_year in LIVE_SOURCE_YEARS:
         target_years.append(current_bs_year + 1)
+    # Always include the previous BS year so the dashboard can show the
+    # configured range that may span the previous-to-current Nepali year.
+    target_years = sorted(set(target_years + [current_bs_year - 1]))
 
     rows = []
     try:
@@ -339,6 +355,14 @@ def get_nepali_holiday_dashboard_data(reference_date: date | None = None):
         pass
 
     rows.sort(key=lambda item: item["from"])
+
+    # Configurable range: HOD dashboard now displays Holidays from
+    # 2083/02/15 to 2084/03/32 (BS) per requirement.
+    range_start = (2083, 2, 15)
+    range_end = (2084, 3, 32)
+    period_label = "Holidays from 2083/02/15 to 2084/03/32"
+
+    rows = [r for r in rows if _in_range(r["from"], range_start, range_end)]
 
     holiday_rows = rows
     optional_holiday_rows = [row for row in rows if _is_optional_holiday(row)]
@@ -356,7 +380,7 @@ def get_nepali_holiday_dashboard_data(reference_date: date | None = None):
         ]
 
     return {
-        "holiday_period_label": f"BS {target_years[0]} to {target_years[-1]} holiday schedule",
+        "holiday_period_label": period_label,
         "holiday_rows": holiday_rows,
         "optional_holiday_rows": optional_holiday_rows,
     }

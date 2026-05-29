@@ -1,0 +1,99 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}Store Manager Dashboard{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Dashboard</li>{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm mb-3" data-testid="store-mgr-header">
+    <div class="card-body py-3">
+        <div class="d-flex justify-content-between flex-wrap gap-2">
+            <div>
+                <h4 class="mb-1">{{ staff_name }}</h4>
+                <div class="text-muted">{{ role_title }} · {{ role_detail }}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <a href="{% url 'inventory' %}" class="btn btn-sm btn-primary" data-testid="btn-go-inventory">Manage Inventory</a>
+                <a href="{% url 'view_past_requisitions' %}" class="btn btn-sm btn-outline-primary" data-testid="btn-go-requisitions">All Requisitions</a>
+                <a href="{% url 'search_store_item' %}" class="btn btn-sm btn-outline-secondary">Search Item</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-3 col-md-6">
+        <a href="{% url 'inventory' %}" class="text-decoration-none text-reset">
+        <div class="card shadow-sm border-0 h-100"><div class="card-body">
+            <div class="text-uppercase small fw-semibold text-muted">Total Items</div>
+            <h2 class="mb-0 mt-2" data-testid="card-total-items">{{ total_items }}</h2>
+        </div></div></a>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card shadow-sm border-0 h-100"><div class="card-body">
+            <div class="text-uppercase small fw-semibold text-muted">Total Quantity</div>
+            <h2 class="mb-0 mt-2">{{ total_quantity }}</h2>
+        </div></div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <a href="{% url 'inventory' %}" class="text-decoration-none text-reset">
+        <div class="card shadow-sm border-0 h-100"><div class="card-body">
+            <div class="text-uppercase small fw-semibold text-muted">Low Stock Alerts</div>
+            <h2 class="mb-0 mt-2 text-danger" data-testid="card-low-stock">{{ low_stock_count }}</h2>
+        </div></div></a>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <a href="{% url 'view_past_requisitions' %}" class="text-decoration-none text-reset">
+        <div class="card shadow-sm border-0 h-100"><div class="card-body">
+            <div class="text-uppercase small fw-semibold text-muted">Pending Requisitions</div>
+            <h2 class="mb-0 mt-2 text-warning" data-testid="card-pending-reqs">{{ pending_requisitions }}</h2>
+        </div></div></a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-3 col-md-6"><div class="card shadow-sm border-0 h-100"><div class="card-body">
+        <div class="small text-muted">Approved</div><h4 class="text-primary mb-0">{{ approved_requisitions }}</h4></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card shadow-sm border-0 h-100"><div class="card-body">
+        <div class="small text-muted">Fulfilled</div><h4 class="text-success mb-0">{{ fulfilled_requisitions }}</h4></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card shadow-sm border-0 h-100"><div class="card-body">
+        <div class="small text-muted">Rejected</div><h4 class="text-danger mb-0">{{ rejected_requisitions }}</h4></div></div></div>
+    <div class="col-lg-3 col-md-6"><div class="card shadow-sm border-0 h-100"><div class="card-body">
+        <div class="small text-muted">My Leaves</div><h4 class="mb-0">{{ total_leave }}</h4></div></div></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white d-flex justify-content-between"><h5 class="mb-0">Low Stock Items</h5>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'inventory' %}">Replenish</a>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm align-middle" data-testid="low-stock-table">
+                    <thead class="table-dark"><tr><th>Item</th><th>Qty</th><th>Reorder</th></tr></thead>
+                    <tbody>
+                    {% for i in low_stock_items %}
+                    <tr><td>{{ i.name }}</td><td class="text-danger fw-semibold">{{ i.quantity }}</td><td>{{ i.reorder_level }}</td></tr>
+                    {% empty %}<tr><td colspan="3" class="text-center text-muted">All stock healthy.</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white"><h5 class="mb-0">Recent Requisitions</h5></div>
+            <div class="card-body">
+                <table class="table table-sm align-middle" data-testid="recent-reqs-table">
+                    <thead class="table-dark"><tr><th>Item</th><th>By</th><th>Qty</th><th>Status</th></tr></thead>
+                    <tbody>
+                    {% for r in recent_requisitions %}
+                    <tr><td>{{ r.item.name }}</td><td>{{ r.requested_by.admin.first_name }}</td><td>{{ r.quantity }}</td>
+                    <td>{% if r.status == 1 %}<span class="badge bg-primary">Approved</span>{% elif r.status == 2 %}<span class="badge bg-success">Fulfilled</span>{% elif r.status == -1 %}<span class="badge bg-danger">Rejected</span>{% else %}<span class="badge bg-warning text-dark">Requested</span>{% endif %}</td></tr>
+                    {% empty %}<tr><td colspan="4" class="text-center text-muted">No requisitions yet.</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

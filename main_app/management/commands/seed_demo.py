@@ -80,6 +80,18 @@ class Command(BaseCommand):
             email='staff@staff.com', password='staff123',
             first_name='Aakriti', last_name='Karki', user_type='2',
         )
+        store_mgr = _upsert_user(
+            email='store@staff.com', password='store123',
+            first_name='Bishal', last_name='Maharjan', user_type='2',
+        )
+        accountant = _upsert_user(
+            email='accountant@staff.com', password='accountant123',
+            first_name='Sabina', last_name='Pradhan', user_type='2',
+        )
+        librarian = _upsert_user(
+            email='librarian@staff.com', password='librarian123',
+            first_name='Sujan', last_name='Bhattarai', user_type='2',
+        )
         student = _upsert_user(
             email='student@student.com', password='student123',
             first_name='Ravi', last_name='Thapa', user_type='3',
@@ -109,6 +121,24 @@ class Command(BaseCommand):
         teacher_profile.role = 'Teacher'
         teacher_profile.role_detail = 'Programming Faculty'
         teacher_profile.save()
+
+        store_profile, _ = Staff.objects.get_or_create(admin=store_mgr)
+        store_profile.course = course
+        store_profile.role = 'Store Manager'
+        store_profile.role_detail = 'Inventory & Store Operations'
+        store_profile.save()
+
+        accountant_profile, _ = Staff.objects.get_or_create(admin=accountant)
+        accountant_profile.course = course
+        accountant_profile.role = 'Accountant'
+        accountant_profile.role_detail = 'Finance & Payroll'
+        accountant_profile.save()
+
+        librarian_profile, _ = Staff.objects.get_or_create(admin=librarian)
+        librarian_profile.course = course
+        librarian_profile.role = 'Librarian'
+        librarian_profile.role_detail = 'Library Administration'
+        librarian_profile.save()
 
         # --- Session ---
         today = date.today()
@@ -306,5 +336,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('Demo data seeded successfully.'))
         self.stdout.write('  Admin    : admin@sagarmatha.edu / admin123')
         self.stdout.write('  HOD      : dinesh.80@hod.com / dinesh.80')
-        self.stdout.write('  Staff    : staff@staff.com / staff123')
+        self.stdout.write('  Teacher  : staff@staff.com / staff123')
+        self.stdout.write('  Store    : store@staff.com / store123')
+        self.stdout.write('  Accountant: accountant@staff.com / accountant123')
+        self.stdout.write('  Librarian: librarian@staff.com / librarian123')
         self.stdout.write('  Student  : student@student.com / student123')

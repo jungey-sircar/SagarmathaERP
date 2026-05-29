@@ -61,6 +61,30 @@ def _is_teacher_role(role_name):
     )
 
 
+def _is_store_manager_role(role_name):
+    return _role_matches(
+        role_name,
+        [
+            "store manager", "store officer", "store-incharge", "store incharge",
+            "inventory manager", "inventory officer", "stock manager",
+        ],
+    )
+
+
+def _is_accountant_role(role_name):
+    return _role_matches(
+        role_name,
+        ["accountant", "finance officer", "finance manager", "account officer"],
+    )
+
+
+def _is_library_admin_role(role_name):
+    return _role_matches(
+        role_name,
+        ["librarian", "library admin", "library officer", "library manager"],
+    )
+
+
 def _department_context(staff):
     department_subjects = Subject.objects.filter(course=staff.course)
     department_students = Student.objects.filter(course=staff.course)
@@ -95,10 +119,6 @@ def staff_home(request):
         ) = _department_context(staff)
         holiday_data = get_nepali_holiday_dashboard_data()
 
-        from .models import (
-            Admission, Announcement, InventoryItem, KaajRequest,
-            OptionalHolidayRequest, StoreRequisition, SubstituteRequest,
-        )
         latest_announcement = Announcement.objects.first()
 
         class_routine = [
@@ -199,6 +219,72 @@ def staff_home(request):
         return render(
             request, "staff_template/academic_incharge_dashboard.html", context
         )
+
+    if _is_store_manager_role(role_text):
+        items = InventoryItem.objects.all()
+        low_stock = [i for i in items if i.is_low_stock]
+        recent_reqs = StoreRequisition.objects.select_related('item', 'requested_by__admin').all()[:10]
+        context = {
+            "page_title": "Store Manager Dashboard",
+            "staff_name": staff.admin.get_full_name() or staff.admin.first_name,
+            "role_title": staff.role,
+            "role_detail": staff.role_detail or "Store / Inventory Operations",
+            "total_items": items.count(),
+            "total_quantity": sum(i.quantity for i in items),
+            "low_stock_count": len(low_stock),
+            "low_stock_items": low_stock[:10],
+            "pending_requisitions": StoreRequisition.objects.filter(status=0).count(),
+            "approved_requisitions": StoreRequisition.objects.filter(status=1).count(),
+            "fulfilled_requisitions": StoreRequisition.objects.filter(status=2).count(),
+            "rejected_requisitions": StoreRequisition.objects.filter(status=-1).count(),
+            "recent_requisitions": recent_reqs,
+            "total_leave": total_leave,
+        }
+        return render(request, "staff_template/store_manager_dashboard.html", context)
+
+    if _is_accountant_role(role_text):
+        from decimal import Decimal
+        payslips_qs = Payslip.objects.select_related('staff__admin').all()
+        total_payroll = sum(
+            (p.basic_salary + p.allowances - p.deductions) for p in payslips_qs
+        ) or Decimal('0')
+        paid_count = payslips_qs.filter(paid=True).count()
+        pending_count = payslips_qs.filter(paid=False).count()
+        context = {
+            "page_title": "Accountant Dashboard",
+            "staff_name": staff.admin.get_full_name() or staff.admin.first_name,
+            "role_title": staff.role,
+            "role_detail": staff.role_detail or "Finance & Payroll",
+            "total_staff": Staff.objects.count(),
+            "total_payslips": payslips_qs.count(),
+            "paid_count": paid_count,
+            "pending_count": pending_count,
+            "total_payroll": total_payroll,
+            "recent_payslips": payslips_qs.order_by('-year', '-month')[:8],
+            "total_leave": total_leave,
+        }
+        return render(request, "staff_template/accountant_dashboard.html", context)
+
+    if _is_library_admin_role(role_text):
+        loans = BookLoan.objects.select_related('book', 'borrower')
+        active_loans = loans.filter(returned_on__isnull=True)
+        returned_loans = loans.filter(returned_on__isnull=False)
+        from datetime import date as _date
+        overdue = [l for l in active_loans if l.due_on and l.due_on < _date.today()]
+        context = {
+            "page_title": "Library Admin Dashboard",
+            "staff_name": staff.admin.get_full_name() or staff.admin.first_name,
+            "role_title": staff.role,
+            "role_detail": staff.role_detail or "Library Operations",
+            "total_books": Book.objects.count(),
+            "active_loans_count": active_loans.count(),
+            "returned_count": returned_loans.count(),
+            "overdue_count": len(overdue),
+            "active_loans": active_loans.order_by('due_on')[:10],
+            "recent_returns": returned_loans.order_by('-returned_on')[:10],
+            "total_leave": total_leave,
+        }
+        return render(request, "staff_template/library_admin_dashboard.html", context)
 
     if _is_teacher_role(role_text):
         total_students = Student.objects.filter(course=staff.course).count()
