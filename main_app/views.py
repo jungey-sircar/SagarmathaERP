@@ -52,19 +52,20 @@ def doLogin(request, **kwargs):
 
         if captcha_key:
             data = {"secret": captcha_key, "response": captcha_token}
-            # Make request
+            # Make request with a timeout so a network issue doesn't block login forever
             try:
-                captcha_server = requests.post(url=captcha_url, data=data)
+                captcha_server = requests.post(url=captcha_url, data=data, timeout=5)
                 response = json.loads(captcha_server.text)
                 if response.get("success") is False:
                     messages.error(request, "Invalid Captcha. Try Again")
                     return redirect("/")
-            except Exception:
+            except requests.exceptions.RequestException:
+                # Network error / timeout while contacting captcha server
                 messages.error(request, "Captcha could not be verified. Try Again")
                 return redirect("/")
 
-        # Authenticate
-        user = EmailBackend.authenticate(
+        # Authenticate using Django's authenticate() so configured backends are used
+        user = authenticate(
             request,
             username=request.POST.get("email"),
             password=request.POST.get("password"),

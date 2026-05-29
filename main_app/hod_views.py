@@ -626,7 +626,11 @@ def get_admin_attendance(request):
 def admin_view_profile(request):
     admin = get_object_or_404(Admin, admin=request.user)
     form = AdminForm(request.POST or None, request.FILES or None, instance=admin)
-    context = {"form": form, "page_title": "View/Edit Profile"}
+    context = {
+        "form": form,
+        "page_title": "View/Edit Profile",
+        "current_profile_pic": getattr(admin.admin.profile_pic, "url", "") if getattr(admin.admin, "profile_pic", None) else "",
+    }
     if request.method == "POST":
         try:
             if form.is_valid():
@@ -638,10 +642,7 @@ def admin_view_profile(request):
                 if password != None:
                     custom_user.set_password(password)
                 if passport != None:
-                    fs = FileSystemStorage()
-                    filename = fs.save(passport.name, passport)
-                    passport_url = fs.url(filename)
-                    custom_user.profile_pic = passport_url
+                    custom_user.profile_pic = passport
                 custom_user.first_name = first_name
                 custom_user.last_name = last_name
                 custom_user.save()

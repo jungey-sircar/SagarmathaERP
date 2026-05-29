@@ -140,7 +140,8 @@ def student_view_profile(request):
     form = StudentEditForm(request.POST or None, request.FILES or None,
                            instance=student)
     context = {'form': form,
-               'page_title': 'View/Edit Profile'
+               'page_title': 'View/Edit Profile',
+               'current_profile_pic': getattr(student.admin.profile_pic, 'url', '') if getattr(student.admin, 'profile_pic', None) else '',
                }
     if request.method == 'POST':
         try:
@@ -155,10 +156,7 @@ def student_view_profile(request):
                 if password != None:
                     admin.set_password(password)
                 if passport != None:
-                    fs = FileSystemStorage()
-                    filename = fs.save(passport.name, passport)
-                    passport_url = fs.url(filename)
-                    admin.profile_pic = passport_url
+                    admin.profile_pic = passport
                 admin.first_name = first_name
                 admin.last_name = last_name
                 admin.address = address
