@@ -29,20 +29,20 @@
 - Seed command provides demo data (users, course, students, books, admissions, exams, inventory, payslips, leave, announcement).
 
 ## What's been implemented (29 May 2026)
-- **Runtime plumbing**: `/app/backend/server.py` ASGI shim, `/app/frontend/proxy.js` HTTP proxy, both wired to supervisor.
-- **Settings**: `CSRF_TRUSTED_ORIGINS`, `ALLOWED_HOSTS=*`, DEBUG via env.
-- **Middleware** rewrite to allow HOD-role staff to use `hod_views` + `module_views` (`main_app/middleware.py`).
-- **New models**: `Admission`, `Exam`, `InventoryItem`, `Payslip`, `Announcement` (`main_app/models.py`, migration `0008`).
-- **New views**: `main_app/module_views.py` — pre_admissions, admissions, examination, human_resource, inventory, payslip, store. Old placeholder payslip/store views replaced.
-- **New templates**: `main_app/templates/modules/{pre_admissions,admissions,examination,human_resource,inventory,payslip,store}.html`.
-- **URL routes**: `/modules/{pre-admissions,admissions,examination,human-resource,inventory}/` + updated `/selfservice/payslip/` and `/selfservice/store/`.
-- **HOD dashboard** (`staff_template/hod_dashboard.html`): real counts on Kaaj/Tour, Store Requisitions, Substitute, Optional Holidays cards; Kaaj/Tour card links to `/modules/pre-admissions/`, Store Requisitions to `/selfservice/store/`. Announcement now displays seeded announcement title + body. Nepali calendar block left untouched.
-- **Modules dropdown** in `templates/main_app/base.html` rewired to the new module routes.
-- **Seed command** `python manage.py seed_demo` creates the 4 demo users, a Computer Science course, 2 subjects, 2 books, 5 admissions (3 inquiries + 2 admitted), 2 exams, 4 inventory items (2 low-stock), 3 payslips for the HOD, sample leave requests, and a welcome announcement.
-- **Test credentials** seeded and recorded in `/app/memory/test_credentials.md`.
+### Iteration 1 — Modules dropdown + base wiring
+- Runtime plumbing, settings (CSRF_TRUSTED_ORIGINS, ALLOWED_HOSTS=*), middleware rewrite, new models (Admission, Exam, InventoryItem, Payslip, Announcement) + migration, new module pages (pre_admissions/admissions/examination/human_resource/inventory + payslip/store), Modules dropdown rewired, dashboard cards show real counts, seed_demo command.
 
-## Test verification (iteration_1.json)
-- Frontend e2e via testing agent: 100% pass. All 30 unique HOD dashboard links return HTTP 200. Nepali calendar still renders the devanagari rows. Module CRUD flows (add inquiry, promote, add inventory item with low-stock badge, schedule exam, generate payslip, logout) all succeed.
+### Iteration 2 — Full ERPNext-style top bar + workflows
+- **Models added**: `KaajRequest`, `OptionalHolidayRequest`, `SubstituteRequest`, `StoreRequisition` (4-state workflow: Requested -> Approved -> Fulfilled / Rejected), `AssessmentMark`, `StudyMaterial`, `Assignment`, `LessonPlan`, `BookLoan` (migration 0009).
+- **`extra_views.py`** with 19 new views: apply/list Kaaj, apply/list Optional Holiday, apply/list/mine Substitute, `requests_waiting_for_approval` (one approver page for all 4 types), `requisition_form`, `view_past_requisitions` (Approve/Reject/Fulfil/Delete), `search_store_item`, `assessment_marks_entry`, `study_materials`, `assignments`, `lesson_plans`, `library_manage` (4-tab catalog + issue + active loans + history), `promote_admission_to_student` (one-click create CustomUser+Student with temp password).
+- **HOD dashboard top bar** rewritten with all 5 dropdowns matching the user's screenshots: Leave/Kaaj (11 items), Store (3), Academic (7), Library (2), Others (4), plus 3 direct buttons.
+- **All 8 dashboard cards** now show live numeric counts and link to the correct workflow page (Clearance->staff leave, Library->Library Manage, Leave Balance, Leave Approvals, Optional Holiday list, Kaaj list, Store Requisitions, Substitute list).
+- **`seed_demo`** extended with sample Kaaj, Optional Holiday, Substitute, 2 Store Requisitions, Assignment, Study Material, Lesson Plan, Assessment Mark and BookLoan.
+- **Nepali calendar block on HOD dashboard left untouched** — re-verified by automated tests, devanagari rows render.
+
+## Test verification
+- iteration_1.json: 100% pass.
+- iteration_2.json: ~98% pass (only cosmetic note about path string in docs). All 21 functional tests pass end-to-end: login → dashboard → every dropdown → form submissions for Kaaj / Optional Holiday / Substitute / Requisition / Assessment / Study Material / Assignment / Lesson Plan / Library Book → approval/fulfilment workflows → one-click Promote to Student.
 
 ## Prioritized backlog
 ### P1 (minor polish)
