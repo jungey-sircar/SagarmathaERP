@@ -339,22 +339,16 @@ def _in_range(bs_string, start_tuple, end_tuple):
 
 
 def get_nepali_holiday_dashboard_data(reference_date: date | None = None):
-    current_bs_year = estimate_bs_year(reference_date)
-    target_years = [current_bs_year]
-    if current_bs_year in LIVE_SOURCE_YEARS:
-        target_years.append(current_bs_year + 1)
-    # Always include the previous BS year so the dashboard can show the
-    # configured range that may span the previous-to-current Nepali year.
-    target_years = sorted(set(target_years + [current_bs_year - 1]))
+    """Build the HOD dashboard holiday card.
 
-    rows = []
-    try:
-        for bs_year in target_years:
-            rows.extend(_flatten_year(bs_year))
-    except Exception:
-        pass
+    Primary source is the curated `holiday_data.get_curated_rows()` dataset
+    (real, vetted Nepali public holidays for BS 2083-2084). The previous
+    live scraper produced duplicate / repeating rows so it is no longer
+    consulted for the displayed range.
+    """
+    from .holiday_data import get_curated_rows
 
-    rows.sort(key=lambda item: item["from"])
+    rows = get_curated_rows()
 
     # Configurable range: HOD dashboard now displays Holidays from
     # 2083/02/15 to 2084/03/32 (BS) per requirement.
@@ -363,9 +357,10 @@ def get_nepali_holiday_dashboard_data(reference_date: date | None = None):
     period_label = "Holidays from 2083/02/15 to 2084/03/32"
 
     rows = [r for r in rows if _in_range(r["from"], range_start, range_end)]
+    rows.sort(key=lambda r: r["from"])
 
-    holiday_rows = rows
-    optional_holiday_rows = [row for row in rows if _is_optional_holiday(row)]
+    holiday_rows = [r for r in rows if r.get("holiday")]
+    optional_holiday_rows = [r for r in rows if r.get("specialday") and not r.get("holiday")]
 
     if not holiday_rows and not optional_holiday_rows:
         holiday_rows = [
@@ -373,7 +368,7 @@ def get_nepali_holiday_dashboard_data(reference_date: date | None = None):
                 "name": "No holiday data available",
                 "from": "-",
                 "to": "-",
-                "remarks": "API unavailable",
+                "remarks": "Static dataset empty",
                 "holiday": True,
                 "specialday": False,
             },
