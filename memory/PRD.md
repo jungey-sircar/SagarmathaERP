@@ -42,7 +42,18 @@
 
 ## Test verification
 - iteration_1.json: 100% pass.
-- iteration_2.json: ~98% pass (only cosmetic note about path string in docs). All 21 functional tests pass end-to-end: login → dashboard → every dropdown → form submissions for Kaaj / Optional Holiday / Substitute / Requisition / Assessment / Study Material / Assignment / Lesson Plan / Library Book → approval/fulfilment workflows → one-click Promote to Student.
+- iteration_2.json: ~98% pass (only cosmetic note). 21 functional flows verified end-to-end.
+- iteration_3.json: **100% pass (9/9 acceptance criteria)**. P2 + cosmetic features verified: high-contrast top-pill borders (slate-700), checkbox column + bulk-promote on Admissions, console email send with full RFC-822 message, forced-password-change middleware redirect loop, change-password form with banner + min-length validation, Payslip PDF generation (ReportLab, valid `%PDF-1.4` binary with `attachment; filename=payslip_<last>_<yr>_<mo>.pdf`).
+
+### Iteration 3 — P2 + cosmetic polish
+- **`CustomUser.must_change_password`** field + migration 0010; middleware loops every authenticated request to `/account/change-password/` until cleared.
+- **`_promote_admission`** helper extracted from `promote_admission_to_student`; reused by new **`bulk_promote_admissions`** view (POSTs `ids` list from checkbox column).
+- **Email send**: `_email_temp_password` uses Django `send_mail`; settings default to console backend so passwords print to backend logs (override via `EMAIL_BACKEND`/SMTP env vars to plug SendGrid/Resend without code changes).
+- **`change_password`** view: forced-banner template, old/new/confirm fields, `update_session_auth_hash` so the user stays logged in, then routes by `user_type`.
+- **`payslip_pdf`** view: ReportLab-built PDF (header, employee table, earnings table with net pay highlight, status line, footer); HOD/admin can download any payslip, others can only download their own.
+- **Top-pill contrast**: slate-700 borders + slate-800 text on white, hover/focus flips to navy + white. `data-testid` on every top-pill plus `hod-topbar` wrapper class.
+- **Table header contrast fix**: global CSS in `base.html` forces `.table-dark th` to navy bg + white text so the previously washed-out module-page tables now read cleanly.
+- **Reportlab** added to `requirements.txt`.
 
 ## Prioritized backlog
 ### P1 (minor polish)
