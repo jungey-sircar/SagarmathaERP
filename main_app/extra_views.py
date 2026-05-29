@@ -3,12 +3,24 @@ Leave/Kaaj, Store (requisition workflow), Academic, Library, Others.
 Also: one-click promote admission -> Student/CustomUser.
 """
 from datetime import timedelta, date as date_cls
+from io import BytesIO
 import secrets
 
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.core.mail import send_mail
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.db.models import Q
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+)
 
 from .models import (
     Admission,
@@ -25,6 +37,7 @@ from .models import (
     LeaveReportStudent,
     LessonPlan,
     OptionalHolidayRequest,
+    Payslip,
     Session,
     Staff,
     StoreRequisition,
@@ -381,17 +394,13 @@ def library_manage(request):
 
 # ---------- One-click promote Admission -> Student ----------
 
-def promote_admission_to_student(request, admission_id):
-    if request.method != 'POST':
-        return redirect(reverse('admissions'))
-    admission = get_object_or_404(Admission, id=admission_id)
-
+def _promote_admission(admission):
+    """Core: create CustomUser+Student from an Admission. Returns
+    (user, temp_password, error_message). On error, the first two are None."""
     course = admission.course or Course.objects.first()
     if not course:
-        messages.error(request, 'Cannot promote: no Course exists. Create one first.')
-        return redirect(reverse('admissions'))
+        return None, None, 'No Course exists. Create one first.'
 
-    # Session: latest or create a default
     session = Session.objects.order_by('-end_year').first()
     if not session:
         today = date_cls.today()
@@ -401,8 +410,7 @@ def promote_admission_to_student(request, admission_id):
         )
 
     if CustomUser.objects.filter(email=admission.email).exists():
-        messages.warning(request, f'A user with {admission.email} already exists.')
-        return redirect(reverse('admissions'))
+        return None, None, f'A user with {admission.email} already exists.'
 
     parts = admission.candidate_name.split(' ', 1)
     first = parts[0]
@@ -418,7 +426,9 @@ def promote_admission_to_student(request, admission_id):
         gender='M',
         address='',
     )
-    # Student profile auto-created by post_save signal; ensure linkage
+    user.must_change_password = True
+    user.save()
+
     student = Student.objects.filter(admin=user).first()
     if student is None:
         student = Student.objects.create(admin=user, course=course, session=session)
@@ -430,9 +440,208 @@ def promote_admission_to_student(request, admission_id):
     admission.status = 'approved'
     admission.stage = 'admitted'
     admission.save()
+    return user, temp_password, None
 
-    messages.success(
-        request,
-        f'Promoted {admission.candidate_name} to Student. Temp password: {temp_password}',
-    )
+
+def _email_temp_password(user, temp_password):
+    """Send the temp password. With console backend the email is printed to
+    backend logs which is fine for dev/demo."""
+    try:
+        send_mail(
+            subject='Welcome to Sagarmatha College — Your Student Account',
+            message=(
+                f'Hello {user.first_name},\n\n'
+                'Your student account has been created.\n\n'
+                f'Email: {user.email}\n'
+                f'Temporary password: {temp_password}\n\n'
+                'Please log in and change your password on first sign-in.\n\n'
+                'Regards,\nSagarmatha College ERP'
+            ),
+            from_email=None,  # uses DEFAULT_FROM_EMAIL
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+        return True
+    except Exception:
+        return False
+
+
+def promote_admission_to_student(request, admission_id):
+    if request.method != 'POST':
+        return redirect(reverse('admissions'))
+    admission = get_object_or_404(Admission, id=admission_id)
+    user, temp_password, err = _promote_admission(admission)
+    if err:
+        messages.error(request, f'Cannot promote: {err}')
+        return redirect(reverse('admissions'))
+
+    emailed = _email_temp_password(user, temp_password)
+    if emailed:
+        messages.success(
+            request,
+            f'Promoted {admission.candidate_name} to Student. '
+            f'Login email + temp password have been sent to {user.email} '
+            f'(also visible in backend logs / temp password: {temp_password}).',
+        )
+    else:
+        messages.success(
+            request,
+            f'Promoted {admission.candidate_name} to Student. '
+            f'Email send failed; temp password: {temp_password}.',
+        )
     return redirect(reverse('admissions'))
+
+
+def bulk_promote_admissions(request):
+    """Promote every selected Admission (POST `ids` list) to Student."""
+    if request.method != 'POST':
+        return redirect(reverse('admissions'))
+    ids = request.POST.getlist('ids')
+    if not ids:
+        messages.warning(request, 'No admissions selected.')
+        return redirect(reverse('admissions'))
+
+    promoted, skipped = [], []
+    for admission_id in ids:
+        admission = Admission.objects.filter(id=admission_id).first()
+        if admission is None:
+            continue
+        user, temp_password, err = _promote_admission(admission)
+        if err:
+            skipped.append(f'{admission.candidate_name}: {err}')
+            continue
+        _email_temp_password(user, temp_password)
+        promoted.append(f'{admission.candidate_name} ({user.email})')
+
+    if promoted:
+        messages.success(
+            request,
+            f'Promoted {len(promoted)} admission(s): ' + ', '.join(promoted)
+            + '. Temp passwords have been emailed (console backend logs them).',
+        )
+    if skipped:
+        messages.warning(request, 'Skipped: ' + '; '.join(skipped))
+    return redirect(reverse('admissions'))
+
+
+# ---------- First-login password change ----------
+
+def change_password(request):
+    user = request.user
+    if request.method == 'POST':
+        old = request.POST.get('old_password') or ''
+        new1 = request.POST.get('new_password1') or ''
+        new2 = request.POST.get('new_password2') or ''
+        if not user.check_password(old):
+            messages.error(request, 'Current password is incorrect.')
+        elif len(new1) < 6:
+            messages.error(request, 'New password must be at least 6 characters.')
+        elif new1 != new2:
+            messages.error(request, 'New passwords do not match.')
+        else:
+            user.set_password(new1)
+            user.must_change_password = False
+            user.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Password changed. Welcome!')
+            # Route by user_type
+            if user.user_type == '1':
+                return redirect(reverse('admin_home'))
+            if user.user_type == '2':
+                return redirect(reverse('staff_home'))
+            return redirect(reverse('student_home'))
+    return render(request, 'modules/change_password.html', {
+        'page_title': 'Change Password',
+        'forced': user.must_change_password,
+    })
+
+
+# ---------- Payslip PDF ----------
+
+def payslip_pdf(request, payslip_id):
+    payslip = get_object_or_404(Payslip, id=payslip_id)
+    # Authorization: staff can download only their own; HOD can download any
+    requester_staff = _staff(request)
+    if (requester_staff is None) or (
+        payslip.staff_id != requester_staff.id
+        and (requester_staff.role or '').strip().lower().startswith('hod') is False
+    ):
+        # Allow user_type=1 (admin) too
+        if request.user.user_type != '1':
+            return HttpResponse('Forbidden', status=403)
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=18*mm, rightMargin=18*mm,
+                            topMargin=18*mm, bottomMargin=18*mm)
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'title', parent=styles['Heading1'], fontSize=20, leading=24,
+        textColor=colors.HexColor('#1f3a68'), spaceAfter=4,
+    )
+    label_style = ParagraphStyle('label', parent=styles['Normal'], textColor=colors.grey)
+
+    story = []
+    story.append(Paragraph('Sagarmatha Engineering College', title_style))
+    story.append(Paragraph('Payslip', styles['Heading2']))
+    story.append(Spacer(1, 6))
+
+    employee_table = Table([
+        ['Employee', f'{payslip.staff.admin.first_name} {payslip.staff.admin.last_name}'],
+        ['Email', payslip.staff.admin.email],
+        ['Department', payslip.staff.course.name if payslip.staff.course else '-'],
+        ['Period', f'{payslip.get_month_display()} {payslip.year}'],
+        ['Generated', payslip.generated_at.strftime('%Y-%m-%d %H:%M')],
+    ], colWidths=[40*mm, 110*mm])
+    employee_table.setStyle(TableStyle([
+        ('FONT', (0, 0), (-1, -1), 'Helvetica', 10),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.grey),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('LINEBELOW', (0, 0), (-1, -1), 0.25, colors.lightgrey),
+    ]))
+    story.append(employee_table)
+    story.append(Spacer(1, 12))
+
+    earnings_table = Table([
+        ['Earnings', 'Amount (NPR)'],
+        ['Basic Salary', f'{payslip.basic_salary:,.2f}'],
+        ['Allowances', f'{payslip.allowances:,.2f}'],
+        ['Gross', f'{(payslip.basic_salary + payslip.allowances):,.2f}'],
+        ['', ''],
+        ['Deductions', f'{payslip.deductions:,.2f}'],
+        ['', ''],
+        ['Net Pay', f'{payslip.net_pay:,.2f}'],
+    ], colWidths=[100*mm, 50*mm])
+    earnings_table.setStyle(TableStyle([
+        ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold', 11),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f3a68')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONT', (0, 1), (-1, -1), 'Helvetica', 10),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('LINEBELOW', (0, 0), (-1, -1), 0.25, colors.lightgrey),
+        ('FONT', (0, -1), (-1, -1), 'Helvetica-Bold', 12),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e8f0fe')),
+    ]))
+    story.append(earnings_table)
+    story.append(Spacer(1, 20))
+    story.append(Paragraph(
+        f'Status: <b>{"Paid" if payslip.paid else "Pending"}</b>',
+        label_style,
+    ))
+    story.append(Spacer(1, 36))
+    story.append(Paragraph(
+        '<i>This is a computer-generated payslip and does not require a signature.</i>',
+        label_style,
+    ))
+
+    doc.build(story)
+    pdf = buf.getvalue()
+    buf.close()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    filename = (
+        f'payslip_{payslip.staff.admin.last_name or payslip.staff.admin.first_name}_'
+        f'{payslip.year}_{payslip.month:02d}.pdf'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

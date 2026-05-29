@@ -7,6 +7,27 @@
     <li class="breadcrumb-item active">Dashboard</li>
 {% endblock breadcrumb %}
 
+{% block custom_css %}
+<style>
+    /* High-contrast pills for the HOD top button bar */
+    .hod-topbar .btn-outline-secondary {
+        border-color: #334155;            /* slate-700 */
+        color: #1f2937;                   /* slate-800 text */
+        background: #fff;
+        font-weight: 500;
+    }
+    .hod-topbar .btn-outline-secondary:hover,
+    .hod-topbar .btn-outline-secondary:focus {
+        background-color: #1f3a68;        /* brand navy */
+        border-color: #1f3a68;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(31, 58, 104, 0.25);
+    }
+    .hod-topbar .btn-outline-secondary i { color: inherit; }
+    .hod-topbar .dropdown-menu { min-width: 220px; }
+</style>
+{% endblock custom_css %}
+
 {% block content %}
 <div class="row mb-3">
     <div class="col-12">
@@ -21,7 +42,7 @@
     </div>
 </div>
 
-<div class="card border-0 shadow-sm mb-3">
+<div class="card border-0 shadow-sm mb-3 hod-topbar">
     <div class="card-body py-2">
         <div class="d-flex flex-wrap align-items-center gap-2">
             <a href="{% url 'staff_home' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-testid="topbar-dashboard"><i class="fas fa-home me-1"></i>Dashboard</a>

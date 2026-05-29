@@ -31,6 +31,14 @@ class LoginCheckMiddleWare(MiddlewareMixin):
                 return None
             return redirect(reverse('login_page'))
 
+        # Force first-login password change
+        if getattr(user, 'must_change_password', False):
+            change_url = reverse('change_password')
+            logout_url = reverse('user_logout')
+            if request.path == change_url or request.path == logout_url or request.path.startswith('/static/'):
+                return None
+            return redirect(change_url)
+
         # Logged-in routing rules
         user_type = getattr(user, 'user_type', None)
 

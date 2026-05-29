@@ -24,6 +24,18 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     {% block custom_css %}{% endblock custom_css %}
+    <style>
+        /* Ensure dark table headers always show white text — overrides any
+           legacy CSS that washes them out on the new module pages. */
+        .table > thead.table-dark th,
+        .table > thead.table-dark td,
+        .table .table-dark th,
+        .table .table-dark td {
+            color: #fff !important;
+            background-color: #1f3a68 !important;
+            border-color: #1f3a68 !important;
+        }
+    </style>
 </head>
 
 <body>

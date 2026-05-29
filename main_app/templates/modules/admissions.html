@@ -66,16 +66,26 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-white"><h5 class="mb-0">Admission Records</h5></div>
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Admission Records</h5>
+        <button type="submit" form="bulk-promote-form" class="btn btn-sm btn-success" data-testid="btn-bulk-promote" onclick="return confirm('Promote all selected admissions to Student?');">
+            <i class="fas fa-user-graduate me-1"></i>Promote Selected to Students
+        </button>
+    </div>
     <div class="card-body">
+        <form id="bulk-promote-form" method="post" action="{% url 'bulk_promote_admissions' %}">{% csrf_token %}</form>
         <div class="table-responsive">
             <table class="table table-sm table-bordered align-middle" data-testid="admissions-table">
                 <thead class="table-dark">
-                    <tr><th>#</th><th>Name</th><th>Email</th><th>Course</th><th>Status</th><th>Applied</th><th>Actions</th></tr>
+                    <tr>
+                        <th style="width: 32px;"><input type="checkbox" id="select-all" data-testid="checkbox-select-all"></th>
+                        <th>#</th><th>Name</th><th>Email</th><th>Course</th><th>Status</th><th>Applied</th><th>Actions</th>
+                    </tr>
                 </thead>
                 <tbody>
                 {% for row in admissions %}
                     <tr>
+                        <td><input type="checkbox" form="bulk-promote-form" name="ids" value="{{ row.id }}" class="bulk-check" data-testid="checkbox-adm-{{ row.id }}"></td>
                         <td>{{ forloop.counter }}</td>
                         <td>{{ row.candidate_name }}</td>
                         <td>{{ row.email }}</td>
@@ -89,7 +99,7 @@
                         <td>
                             <form method="post" action="{% url 'promote_admission' row.id %}" class="d-inline">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-success" data-testid="btn-promote-student-{{ row.id }}" title="One-click: create CustomUser + Student profile and link to course">Promote to Student</button>
+                                <button type="submit" class="btn btn-sm btn-success" data-testid="btn-promote-student-{{ row.id }}" title="One-click: create CustomUser + Student profile + email temp password">Promote to Student</button>
                             </form>
                             <form method="post" class="d-inline">
                                 {% csrf_token %}
@@ -99,13 +109,23 @@
                         </td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="7" class="text-center text-muted">No admissions yet.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted">No admissions yet.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<script>
+    (function() {
+        const all = document.getElementById('select-all');
+        if (!all) return;
+        all.addEventListener('change', () => {
+            document.querySelectorAll('.bulk-check').forEach(cb => { cb.checked = all.checked; });
+        });
+    })();
+</script>
 
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">

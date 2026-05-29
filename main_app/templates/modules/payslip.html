@@ -38,7 +38,7 @@
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-sm align-middle" data-testid="payslip-table">
-                <thead class="table-dark"><tr><th>#</th>{% if not is_staff %}<th>Staff</th>{% endif %}<th>Month</th><th>Year</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net Pay</th><th>Status</th></tr></thead>
+                <thead class="table-dark"><tr><th>#</th>{% if not is_staff %}<th>Staff</th>{% endif %}<th>Month</th><th>Year</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net Pay</th><th>Status</th><th>PDF</th></tr></thead>
                 <tbody>
                 {% for p in payslips %}
                     <tr>
@@ -51,9 +51,10 @@
                         <td>{{ p.deductions }}</td>
                         <td><strong>{{ p.net_pay }}</strong></td>
                         <td>{% if p.paid %}<span class="badge bg-success">Paid</span>{% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}</td>
+                        <td><a class="btn btn-sm btn-outline-primary" href="{% url 'payslip_pdf' p.id %}" target="_blank" data-testid="btn-payslip-pdf-{{ p.id }}"><i class="fas fa-file-pdf me-1"></i>Download</a></td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="9" class="text-center text-muted">No payslip records yet.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted">No payslip records yet.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
