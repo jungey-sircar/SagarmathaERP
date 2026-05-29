@@ -46,6 +46,8 @@ class LoginCheckMiddleWare(MiddlewareMixin):
                 return redirect(reverse('staff_home'))
             if modulename == 'main_app.module_views' and not _is_hod_staff(user):
                 return redirect(reverse('staff_home'))
+            if modulename == 'main_app.extra_views':
+                return None
             return None
 
         if user_type == '3':  # Student

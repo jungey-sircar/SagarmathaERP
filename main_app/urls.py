@@ -18,7 +18,7 @@ from django.urls import path
 
 from main_app.EditResultView import EditResultView
 
-from . import hod_views, module_views, staff_views, student_views, views
+from . import extra_views, hod_views, module_views, staff_views, student_views, views
 
 urlpatterns = [
     path("", views.login_page, name="login_page"),
@@ -143,9 +143,31 @@ urlpatterns = [
     # Modules
     path("modules/pre-admissions/", module_views.pre_admissions, name="pre_admissions"),
     path("modules/admissions/", module_views.admissions, name="admissions"),
+    path("modules/admissions/<int:admission_id>/promote/", extra_views.promote_admission_to_student, name="promote_admission"),
     path("modules/examination/", module_views.examination, name="examination"),
     path("modules/human-resource/", module_views.human_resource, name="human_resource"),
     path("modules/inventory/", module_views.inventory, name="inventory"),
+    # Leave / Kaaj / Optional Holiday / Substitute
+    path("leave/leaves-applied/", extra_views.leaves_applied, name="leaves_applied"),
+    path("leave/kaaj/apply/", extra_views.kaaj_apply, name="kaaj_apply"),
+    path("leave/kaaj/list/", extra_views.kaaj_applied, name="kaaj_applied"),
+    path("leave/optional-holiday/apply/", extra_views.optional_holiday_apply, name="optional_holiday_apply"),
+    path("leave/optional-holiday/list/", extra_views.optional_holidays_applied, name="optional_holidays_applied"),
+    path("leave/substitute/apply/", extra_views.substitute_apply, name="substitute_apply"),
+    path("leave/substitute/list/", extra_views.substitutes_applied, name="substitutes_applied"),
+    path("leave/substitute/mine/", extra_views.my_substitutes, name="my_substitutes"),
+    path("leave/approvals/", extra_views.requests_waiting_for_approval, name="requests_waiting_for_approval"),
+    # Store workflow
+    path("store/requisition/", extra_views.requisition_form, name="requisition_form"),
+    path("store/requisitions/", extra_views.view_past_requisitions, name="view_past_requisitions"),
+    path("store/search/", extra_views.search_store_item, name="search_store_item"),
+    # Academic
+    path("academic/assessment-marks/", extra_views.assessment_marks_entry, name="assessment_marks_entry"),
+    path("academic/study-materials/", extra_views.study_materials, name="study_materials"),
+    path("academic/assignments/", extra_views.assignments, name="assignments"),
+    path("academic/lesson-plans/", extra_views.lesson_plans, name="lesson_plans"),
+    # Library management
+    path("library/manage/", extra_views.library_manage, name="library_manage"),
     path(
         "staff/attendance/fetch/",
         staff_views.get_student_attendance,

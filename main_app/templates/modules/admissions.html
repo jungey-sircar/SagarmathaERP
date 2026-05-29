@@ -87,6 +87,10 @@
                         </td>
                         <td>{{ row.applied_at }}</td>
                         <td>
+                            <form method="post" action="{% url 'promote_admission' row.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success" data-testid="btn-promote-student-{{ row.id }}" title="One-click: create CustomUser + Student profile and link to course">Promote to Student</button>
+                            </form>
                             <form method="post" class="d-inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="id" value="{{ row.id }}">

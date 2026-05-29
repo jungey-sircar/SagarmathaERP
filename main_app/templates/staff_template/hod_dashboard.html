@@ -24,40 +24,75 @@
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <div class="d-flex flex-wrap align-items-center gap-2">
-            <a href="{% url 'staff_home' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Dashboard</a>
-            <a href="{% url 'staff_view_profile' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Profile</a>
-            <a href="{% url 'admin_view_attendance' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Attendance</a>
+            <a href="{% url 'staff_home' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-testid="topbar-dashboard"><i class="fas fa-home me-1"></i>Dashboard</a>
+            <a href="{% url 'staff_view_profile' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-testid="topbar-profile"><i class="fas fa-user me-1"></i>Profile</a>
+            <a href="{% url 'admin_view_attendance' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-testid="topbar-attendance"><i class="fas fa-clipboard-check me-1"></i>Attendance</a>
 
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Leave/Kaaj
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-testid="topbar-leave-kaaj">
+                    <i class="fas fa-calendar-minus me-1"></i>Leave/Kaaj
                 </button>
                 <ul class="dropdown-menu shadow-sm">
-                    <li><a class="dropdown-item" href="{% url 'leave_balance' %}">Leave Balance</a></li>
-                    <li><a class="dropdown-item" href="{% url 'staff_apply_leave' %}">Apply Leave</a></li>
-                    <li><a class="dropdown-item" href="{% url 'view_staff_leave' %}">Clearance Requests</a></li>
+                    <li><a class="dropdown-item" href="{% url 'staff_apply_leave' %}" data-testid="menu-apply-leave">Apply Leave</a></li>
+                    <li><a class="dropdown-item" href="{% url 'leaves_applied' %}" data-testid="menu-leaves-applied">Leaves Applied</a></li>
+                    <li><a class="dropdown-item" href="{% url 'leave_balance' %}" data-testid="menu-leave-balance">Leave Balance</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'kaaj_apply' %}" data-testid="menu-apply-kaaj">Apply Kaaj</a></li>
+                    <li><a class="dropdown-item" href="{% url 'kaaj_applied' %}" data-testid="menu-kaaj-applied">Kaaj Applied List</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'optional_holiday_apply' %}" data-testid="menu-apply-opt-holiday">Apply Optional Holiday</a></li>
+                    <li><a class="dropdown-item" href="{% url 'optional_holidays_applied' %}" data-testid="menu-opt-holidays-applied">Optional Holidays Applied</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'substitute_apply' %}" data-testid="menu-apply-substitute">Apply Substitute/Extra Days</a></li>
+                    <li><a class="dropdown-item" href="{% url 'substitutes_applied' %}" data-testid="menu-substitutes-applied">Substitutes/Extra Applied</a></li>
+                    <li><a class="dropdown-item" href="{% url 'my_substitutes' %}" data-testid="menu-my-substitutes">My Substitues/Extra Days</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'requests_waiting_for_approval' %}" data-testid="menu-approvals">Requests Waiting For Approval</a></li>
                 </ul>
             </div>
 
-            <a href="{% url 'payslip_dashboard' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Payslip</a>
-            <a href="{% url 'store_dashboard' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Store</a>
-            <a href="{% url 'books_in_hand' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Library</a>
+            <a href="{% url 'payslip_dashboard' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-testid="topbar-payslip"><i class="fas fa-money-bill-wave me-1"></i>Payslip</a>
 
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Academic
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-testid="topbar-store">
+                    <i class="fas fa-store me-1"></i>Store
                 </button>
                 <ul class="dropdown-menu shadow-sm">
-                    <li><a class="dropdown-item" href="{% url 'academic_dashboard' %}">Overview</a></li>
-                    <li><a class="dropdown-item" href="{% url 'manage_course' %}">Manage Faculties / Departments</a></li>
+                    <li><a class="dropdown-item" href="{% url 'requisition_form' %}" data-testid="menu-requisition-form">Requisition Form</a></li>
+                    <li><a class="dropdown-item" href="{% url 'view_past_requisitions' %}" data-testid="menu-past-requisitions">View Past Requisitions</a></li>
+                    <li><a class="dropdown-item" href="{% url 'search_store_item' %}" data-testid="menu-search-store">Search Item In Store</a></li>
+                </ul>
+            </div>
+
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-testid="topbar-library">
+                    <i class="fas fa-book me-1"></i>Library
+                </button>
+                <ul class="dropdown-menu shadow-sm">
+                    <li><a class="dropdown-item" href="{% url 'books_in_hand' %}" data-testid="menu-books-in-hand">Books In Hand</a></li>
+                    <li><a class="dropdown-item" href="{% url 'library_manage' %}" data-testid="menu-library-manage">Manage Library</a></li>
+                </ul>
+            </div>
+
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-testid="topbar-academic">
+                    <i class="fas fa-graduation-cap me-1"></i>Academic
+                </button>
+                <ul class="dropdown-menu shadow-sm">
+                    <li><a class="dropdown-item" href="{% url 'assessment_marks_entry' %}" data-testid="menu-assessment-marks">Assessment Marks Entry</a></li>
+                    <li><a class="dropdown-item" href="{% url 'study_materials' %}" data-testid="menu-study-materials">Study Materials</a></li>
+                    <li><a class="dropdown-item" href="{% url 'assignments' %}" data-testid="menu-assignments">Assignments</a></li>
+                    <li><a class="dropdown-item" href="{% url 'lesson_plans' %}" data-testid="menu-lesson-plans">Lesson/Lab Plan</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'manage_course' %}">Manage Faculties</a></li>
                     <li><a class="dropdown-item" href="{% url 'manage_subject' %}">Manage Subjects</a></li>
                     <li><a class="dropdown-item" href="{% url 'manage_student' %}">Manage Students</a></li>
                 </ul>
             </div>
 
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Others
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-testid="topbar-others">
+                    <i class="fas fa-ellipsis-v me-1"></i>Others
                 </button>
                 <ul class="dropdown-menu shadow-sm">
                     <li><a class="dropdown-item" href="{% url 'others_dashboard' %}">Overview</a></li>
@@ -99,7 +134,7 @@
                 </style>
 
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'books_in_hand' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'library_manage' %}" class="text-decoration-none text-reset" data-testid="card-library">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Library</div>
@@ -113,7 +148,7 @@
         </a>
     </div>
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'leave_balance' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'leave_balance' %}" class="text-decoration-none text-reset" data-testid="card-leave-balance">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Leave Balance</div>
@@ -126,7 +161,7 @@
         </a>
     </div>
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'view_staff_leave' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'requests_waiting_for_approval' %}" class="text-decoration-none text-reset" data-testid="card-leave-request">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -143,7 +178,7 @@
 
 <div class="row g-3 mt-0">
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'leave_balance' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'optional_holidays_applied' %}" class="text-decoration-none text-reset" data-testid="card-optional-holiday">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -157,7 +192,7 @@
         </a>
     </div>
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'pre_admissions' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'kaaj_applied' %}" class="text-decoration-none text-reset" data-testid="card-kaaj-tour">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -171,7 +206,7 @@
         </a>
     </div>
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'store_dashboard' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'view_past_requisitions' %}" class="text-decoration-none text-reset" data-testid="card-store-requisitions">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>
@@ -185,7 +220,7 @@
         </a>
     </div>
     <div class="col-lg-3 col-md-6">
-        <a href="{% url 'view_staff_leave' %}" class="text-decoration-none text-reset">
+        <a href="{% url 'substitutes_applied' %}" class="text-decoration-none text-reset" data-testid="card-substitute">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="text-uppercase small fw-semibold text-muted">Waiting for Your Approval</div>

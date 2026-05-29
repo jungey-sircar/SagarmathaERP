@@ -16,18 +16,27 @@ from django.db import transaction
 from main_app.models import (
     Admission,
     Announcement,
+    AssessmentMark,
+    Assignment,
+    Book,
+    BookLoan,
     Course,
     CustomUser,
     Exam,
     InventoryItem,
+    KaajRequest,
+    LeaveReportStaff,
+    LeaveReportStudent,
+    LessonPlan,
+    OptionalHolidayRequest,
     Payslip,
     Session,
     Staff,
+    StoreRequisition,
     Student,
+    StudyMaterial,
     Subject,
-    Book,
-    LeaveReportStaff,
-    LeaveReportStudent,
+    SubstituteRequest,
 )
 
 
@@ -209,6 +218,90 @@ class Command(BaseCommand):
                 body='All modules are now live. Use the Modules dropdown to navigate Pre Admissions, Admissions, Examination, HR, Inventory and more.',
                 audience='all',
             )
+
+        # --- Kaaj requests ---
+        if KaajRequest.objects.count() == 0:
+            KaajRequest.objects.create(
+                staff=teacher_profile, purpose='Industry visit at Tech Park',
+                destination='Pulchowk', from_date=today + timedelta(days=5),
+                to_date=today + timedelta(days=5), status=0,
+            )
+            KaajRequest.objects.create(
+                staff=teacher_profile, purpose='Conference attendance',
+                destination='Pokhara', from_date=today - timedelta(days=20),
+                to_date=today - timedelta(days=18), status=1,
+            )
+
+        # --- Optional Holiday requests ---
+        if OptionalHolidayRequest.objects.count() == 0:
+            OptionalHolidayRequest.objects.create(
+                staff=teacher_profile, holiday_name='Lhosar',
+                holiday_date=today + timedelta(days=14),
+                reason='Family festival', status=0,
+            )
+
+        # --- Substitute / Extra-Day requests ---
+        if SubstituteRequest.objects.count() == 0:
+            SubstituteRequest.objects.create(
+                staff=teacher_profile, substitute_for=hod_profile,
+                work_date=today + timedelta(days=3),
+                description='Cover OS class while HOD is in meeting',
+                status=0,
+            )
+
+        # --- Store Requisitions ---
+        if StoreRequisition.objects.count() == 0:
+            marker = InventoryItem.objects.filter(name='Whiteboard Marker').first()
+            bulb = InventoryItem.objects.filter(name='Projector Bulb').first()
+            if marker:
+                StoreRequisition.objects.create(
+                    requested_by=teacher_profile, item=marker, quantity=15,
+                    reason='Restock for new semester', status=0,
+                )
+            if bulb:
+                StoreRequisition.objects.create(
+                    requested_by=teacher_profile, item=bulb, quantity=2,
+                    reason='Lab-1 projector dimming', status=0,
+                )
+
+        # --- Academic items ---
+        if Assignment.objects.count() == 0:
+            Assignment.objects.create(
+                title='Linked List Implementation', subject=subj1,
+                description='Implement singly linked list with traversal in C.',
+                due_date=today + timedelta(days=10), assigned_by=teacher_profile,
+            )
+        if StudyMaterial.objects.count() == 0:
+            StudyMaterial.objects.create(
+                title='Data Structures Notes (PDF)', subject=subj1,
+                description='Comprehensive notes covering arrays, lists, trees.',
+                link='https://example.com/ds-notes.pdf', uploaded_by=teacher_profile,
+            )
+        if LessonPlan.objects.count() == 0:
+            LessonPlan.objects.create(
+                title='Week 1: Introduction to Data Structures', subject=subj1,
+                week_number=1, topics='Arrays, ADT, complexity analysis',
+                is_lab=False, prepared_by=teacher_profile,
+            )
+            LessonPlan.objects.create(
+                title='Lab 1: Array operations', subject=subj1,
+                week_number=1, topics='Implement insertion, deletion, search',
+                is_lab=True, prepared_by=teacher_profile,
+            )
+        if AssessmentMark.objects.count() == 0:
+            AssessmentMark.objects.create(
+                student=student_profile, subject=subj1,
+                assessment_name='Quiz 1', marks_obtained=18, max_marks=20,
+            )
+
+        # --- Library loans ---
+        if BookLoan.objects.count() == 0:
+            first_book = Book.objects.first()
+            if first_book and student:
+                BookLoan.objects.create(
+                    book=first_book, borrower=student,
+                    due_on=today + timedelta(days=14),
+                )
 
         self.stdout.write(self.style.SUCCESS('Demo data seeded successfully.'))
         self.stdout.write('  Admin    : admin@sagarmatha.edu / admin123')

@@ -95,7 +95,10 @@ def staff_home(request):
         ) = _department_context(staff)
         holiday_data = get_nepali_holiday_dashboard_data()
 
-        from .models import Admission, Announcement, InventoryItem
+        from .models import (
+            Admission, Announcement, InventoryItem, KaajRequest,
+            OptionalHolidayRequest, StoreRequisition, SubstituteRequest,
+        )
         latest_announcement = Announcement.objects.first()
 
         class_routine = [
@@ -108,9 +111,7 @@ def staff_home(request):
             ("Sat", "Routine has not been uploaded for Saturday."),
         ]
 
-        store_requisition_count = sum(
-            1 for item in InventoryItem.objects.all() if item.is_low_stock
-        )
+        store_requisition_count = StoreRequisition.objects.filter(status=0).count()
 
         context = {
             "page_title": "HOD Dashboard",
@@ -132,10 +133,10 @@ def staff_home(request):
             "leave_balance_count": LeaveReportStaff.objects.filter(staff=staff, status=1).count(),
             "pending_leave_count": LeaveReportStaff.objects.filter(status=0).count()
             + LeaveReportStudent.objects.filter(status=0).count(),
-            "optional_holiday_count": len(holiday_data.get("optional_holiday_rows", [])),
-            "kaaj_tour_count": Admission.objects.filter(stage='inquiry', status='pending').count(),
+            "optional_holiday_count": OptionalHolidayRequest.objects.filter(status=0).count(),
+            "kaaj_tour_count": KaajRequest.objects.filter(status=0).count(),
             "store_requisition_count": store_requisition_count,
-            "substitute_work_day_count": LeaveReportStaff.objects.filter(status=1).count(),
+            "substitute_work_day_count": SubstituteRequest.objects.filter(status=0).count(),
             "holiday_rows": holiday_data["holiday_rows"],
             "optional_holiday_rows": holiday_data["optional_holiday_rows"],
             "holiday_period_label": holiday_data["holiday_period_label"],

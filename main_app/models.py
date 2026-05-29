@@ -320,6 +320,151 @@ class Announcement(models.Model):
         return self.title
 
 
+# ---------- Leave / Kaaj / Optional Holiday / Substitute ----------
+
+STATUS_PENDING, STATUS_APPROVED, STATUS_REJECTED = 0, 1, -1
+APPROVAL_STATUS_CHOICES = (
+    (STATUS_PENDING, 'Pending'),
+    (STATUS_APPROVED, 'Approved'),
+    (STATUS_REJECTED, 'Rejected'),
+)
+
+
+class KaajRequest(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='kaaj_requests')
+    purpose = models.CharField(max_length=255)
+    destination = models.CharField(max_length=160, blank=True)
+    from_date = models.DateField()
+    to_date = models.DateField()
+    status = models.SmallIntegerField(choices=APPROVAL_STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class OptionalHolidayRequest(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='optional_holiday_requests')
+    holiday_name = models.CharField(max_length=160)
+    holiday_date = models.DateField()
+    reason = models.TextField(blank=True)
+    status = models.SmallIntegerField(choices=APPROVAL_STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class SubstituteRequest(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='substitute_requests')
+    substitute_for = models.ForeignKey(
+        Staff, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='substituted_by_requests',
+    )
+    work_date = models.DateField()
+    description = models.CharField(max_length=255)
+    status = models.SmallIntegerField(choices=APPROVAL_STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+# ---------- Store Requisition (approval workflow) ----------
+
+class StoreRequisition(models.Model):
+    REQUESTED, APPROVED_STORE, FULFILLED, REJECTED_STORE = 0, 1, 2, -1
+    STATUS_CHOICES = (
+        (REQUESTED, 'Requested'),
+        (APPROVED_STORE, 'Approved'),
+        (FULFILLED, 'Fulfilled'),
+        (REJECTED_STORE, 'Rejected'),
+    )
+
+    requested_by = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='requisitions')
+    item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='requisitions')
+    quantity = models.PositiveIntegerField(default=1)
+    reason = models.CharField(max_length=255, blank=True)
+    status = models.SmallIntegerField(choices=STATUS_CHOICES, default=REQUESTED)
+    decided_by = models.ForeignKey(
+        Staff, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='decided_requisitions',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+# ---------- Academic items (Assessment, Study Material, Assignment, Lesson Plan) ----------
+
+class AssessmentMark(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='assessment_marks')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='assessment_marks')
+    assessment_name = models.CharField(max_length=120, default='Internal')
+    marks_obtained = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    max_marks = models.DecimalField(max_digits=6, decimal_places=2, default=100)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-recorded_at']
+
+
+class StudyMaterial(models.Model):
+    title = models.CharField(max_length=160)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='study_materials')
+    description = models.TextField(blank=True)
+    link = models.URLField(blank=True)
+    uploaded_by = models.ForeignKey(Staff, on_delete=models.SET_NULL, null=True, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+
+class Assignment(models.Model):
+    title = models.CharField(max_length=160)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='assignments')
+    description = models.TextField(blank=True)
+    due_date = models.DateField()
+    assigned_by = models.ForeignKey(Staff, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-due_date']
+
+
+class LessonPlan(models.Model):
+    title = models.CharField(max_length=160)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lesson_plans')
+    week_number = models.PositiveSmallIntegerField(default=1)
+    topics = models.TextField(blank=True)
+    is_lab = models.BooleanField(default=False)
+    prepared_by = models.ForeignKey(Staff, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['week_number']
+
+
+# ---------- Library issue / return ----------
+
+class BookLoan(models.Model):
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='loans')
+    borrower = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='book_loans')
+    issued_on = models.DateField(auto_now_add=True)
+    due_on = models.DateField()
+    returned_on = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-issued_on']
+
+    @property
+    def is_returned(self):
+        return self.returned_on is not None
+
+
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
     if not created:
