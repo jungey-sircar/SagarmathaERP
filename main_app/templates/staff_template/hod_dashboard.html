@@ -329,7 +329,7 @@
                                         <td>{{ row.name }}</td>
                                         <td>{{ row.remarks }}</td>
                                         <td>
-                                            <a href="{% url 'staff_apply_leave' %}" class="btn btn-sm btn-outline-primary">Apply</a>
+                                            <a href="{% url 'staff_apply_leave' %}?date={{ row.from|urlencode }}" class="btn btn-sm btn-outline-primary" data-testid="btn-apply-leave-{{ forloop.counter }}">Apply</a>
                                         </td>
                                     </tr>
                                     {% empty %}

@@ -463,6 +463,9 @@ def update_attendance(request):
 def staff_apply_leave(request):
     form = LeaveReportStaffForm(request.POST or None)
     staff = get_object_or_404(Staff, admin_id=request.user.id)
+    selected_date = (request.GET.get("date") or "").strip().replace("/", "-")
+    if request.method != "POST" and selected_date:
+        form = LeaveReportStaffForm(initial={"date": selected_date})
     context = {
         "form": form,
         "leave_history": LeaveReportStaff.objects.filter(staff=staff),
