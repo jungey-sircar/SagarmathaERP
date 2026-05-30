@@ -65,8 +65,13 @@ def _is_store_manager_role(role_name):
     return _role_matches(
         role_name,
         [
-            "store manager", "store officer", "store-incharge", "store incharge",
-            "inventory manager", "inventory officer", "stock manager",
+            "store manager",
+            "store officer",
+            "store-incharge",
+            "store incharge",
+            "inventory manager",
+            "inventory officer",
+            "stock manager",
         ],
     )
 
@@ -133,6 +138,31 @@ def staff_home(request):
 
         store_requisition_count = StoreRequisition.objects.filter(status=0).count()
 
+        pending_leave_requests = []
+        pending_teacher_leaves = (
+            LeaveReportStaff.objects.select_related("staff__admin", "staff__course")
+            .filter(status=0, staff__course=staff.course)
+            .order_by("-created_at")
+        )
+        for leave in pending_teacher_leaves:
+            if not leave.staff or not _is_teacher_role(leave.staff.role):
+                continue
+            pending_leave_requests.append(
+                {
+                    "kind": "Teacher",
+                    "name": f"{leave.staff.admin.first_name} {leave.staff.admin.last_name}".strip(),
+                    "course": getattr(leave.staff.course, "name", ""),
+                    "date": leave.date,
+                    "message": leave.message,
+                    "created_at": leave.created_at,
+                    "review_url": reverse("view_staff_leave"),
+                }
+            )
+            if len(pending_leave_requests) == 5:
+                break
+
+        scoped_leave_count = len(pending_leave_requests)
+
         context = {
             "page_title": "HOD Dashboard",
             "staff_name": staff.admin.get_full_name() or staff.admin.first_name,
@@ -148,22 +178,29 @@ def staff_home(request):
             "total_leave": total_leave,
             "subject_list": subject_list,
             "attendance_list": attendance_list,
-            "clearance_request_count": LeaveReportStaff.objects.filter(status=0).count(),
+            "clearance_request_count": scoped_leave_count,
             "library_books_count": Book.objects.count(),
-            "leave_balance_count": LeaveReportStaff.objects.filter(staff=staff, status=1).count(),
-            "pending_leave_count": LeaveReportStaff.objects.filter(status=0).count()
-            + LeaveReportStudent.objects.filter(status=0).count(),
-            "optional_holiday_count": OptionalHolidayRequest.objects.filter(status=0).count(),
-            "kaaj_tour_count": KaajRequest.objects.filter(status=0).count(),
-            "store_requisition_count": store_requisition_count,
-            "substitute_work_day_count": SubstituteRequest.objects.filter(status=0).count(),
+            "leave_balance_count": LeaveReportStaff.objects.filter(
+                staff=staff, status=1
+            ).count(),
+            "optional_holiday_count": OptionalHolidayRequest.objects.filter(
+                status=0
+            ).count(),
+            "pending_leave_count": scoped_leave_count,
+            "substitute_work_day_count": SubstituteRequest.objects.filter(
+                status=0
+            ).count(),
             "holiday_rows": holiday_data["holiday_rows"],
             "optional_holiday_rows": holiday_data["optional_holiday_rows"],
             "holiday_period_label": holiday_data["holiday_period_label"],
             "holiday_scroll_anchor": "2083/02/15",
             "class_routine": class_routine,
             "announcement": latest_announcement.body if latest_announcement else "",
-            "announcement_title": latest_announcement.title if latest_announcement else "",
+            "announcement_title": (
+                latest_announcement.title if latest_announcement else ""
+            ),
+            "pending_leave_requests": pending_leave_requests,
+            "pending_leave_title": "Pending Teacher Leave Requests",
         }
         return render(request, "staff_template/hod_dashboard.html", context)
 
@@ -223,7 +260,9 @@ def staff_home(request):
     if _is_store_manager_role(role_text):
         items = InventoryItem.objects.all()
         low_stock = [i for i in items if i.is_low_stock]
-        recent_reqs = StoreRequisition.objects.select_related('item', 'requested_by__admin').all()[:10]
+        recent_reqs = StoreRequisition.objects.select_related(
+            "item", "requested_by__admin"
+        ).all()[:10]
         context = {
             "page_title": "Store Manager Dashboard",
             "staff_name": staff.admin.get_full_name() or staff.admin.first_name,
@@ -244,10 +283,11 @@ def staff_home(request):
 
     if _is_accountant_role(role_text):
         from decimal import Decimal
-        payslips_qs = Payslip.objects.select_related('staff__admin').all()
+
+        payslips_qs = Payslip.objects.select_related("staff__admin").all()
         total_payroll = sum(
             (p.basic_salary + p.allowances - p.deductions) for p in payslips_qs
-        ) or Decimal('0')
+        ) or Decimal("0")
         paid_count = payslips_qs.filter(paid=True).count()
         pending_count = payslips_qs.filter(paid=False).count()
         context = {
@@ -260,16 +300,17 @@ def staff_home(request):
             "paid_count": paid_count,
             "pending_count": pending_count,
             "total_payroll": total_payroll,
-            "recent_payslips": payslips_qs.order_by('-year', '-month')[:8],
+            "recent_payslips": payslips_qs.order_by("-year", "-month")[:8],
             "total_leave": total_leave,
         }
         return render(request, "staff_template/accountant_dashboard.html", context)
 
     if _is_library_admin_role(role_text):
-        loans = BookLoan.objects.select_related('book', 'borrower')
+        loans = BookLoan.objects.select_related("book", "borrower")
         active_loans = loans.filter(returned_on__isnull=True)
         returned_loans = loans.filter(returned_on__isnull=False)
         from datetime import date as _date
+
         overdue = [l for l in active_loans if l.due_on and l.due_on < _date.today()]
         context = {
             "page_title": "Library Admin Dashboard",
@@ -280,8 +321,8 @@ def staff_home(request):
             "active_loans_count": active_loans.count(),
             "returned_count": returned_loans.count(),
             "overdue_count": len(overdue),
-            "active_loans": active_loans.order_by('due_on')[:10],
-            "recent_returns": returned_loans.order_by('-returned_on')[:10],
+            "active_loans": active_loans.order_by("due_on")[:10],
+            "recent_returns": returned_loans.order_by("-returned_on")[:10],
             "total_leave": total_leave,
         }
         return render(request, "staff_template/library_admin_dashboard.html", context)
@@ -298,6 +339,32 @@ def staff_home(request):
             attendance_count = Attendance.objects.filter(subject=subject).count()
             subject_list.append(subject.name)
             attendance_list.append(attendance_count)
+
+        pending_leave_requests = []
+        pending_student_leaves = (
+            LeaveReportStudent.objects.select_related(
+                "student__admin", "student__course"
+            )
+            .filter(status=0, student__course=staff.course)
+            .order_by("-created_at")
+        )
+        for leave in pending_student_leaves:
+            if not leave.student:
+                continue
+            pending_leave_requests.append(
+                {
+                    "kind": "Student",
+                    "name": f"{leave.student.admin.first_name} {leave.student.admin.last_name}".strip(),
+                    "course": getattr(leave.student.course, "name", ""),
+                    "date": leave.date,
+                    "message": leave.message,
+                    "created_at": leave.created_at,
+                    "review_url": reverse("view_student_leave"),
+                }
+            )
+            if len(pending_leave_requests) == 5:
+                break
+        scoped_leave_count = len(pending_leave_requests)
         context = {
             "page_title": "Teacher Dashboard",
             "total_students": total_students,
@@ -306,6 +373,10 @@ def staff_home(request):
             "total_subject": total_subject,
             "subject_list": subject_list,
             "attendance_list": attendance_list,
+            "pending_leave_requests": pending_leave_requests,
+            "pending_leave_title": "Pending Student Leave Requests",
+            "clearance_request_count": scoped_leave_count,
+            "pending_leave_count": scoped_leave_count,
         }
         return render(request, "staff_template/home_content.html", context)
 
@@ -517,7 +588,11 @@ def staff_view_profile(request):
     context = {
         "form": form,
         "page_title": "View/Update Profile",
-        "current_profile_pic": getattr(staff.admin.profile_pic, "url", "") if getattr(staff.admin, "profile_pic", None) else "",
+        "current_profile_pic": (
+            getattr(staff.admin.profile_pic, "url", "")
+            if getattr(staff.admin, "profile_pic", None)
+            else ""
+        ),
     }
     if request.method == "POST":
         try:

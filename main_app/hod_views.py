@@ -25,6 +25,11 @@ def _is_hod_role(role_name):
     return role_text.startswith("hod") or "head of department" in role_text
 
 
+def _is_teacher_role(role_name):
+    role_text = (role_name or "").strip().lower()
+    return "teacher" in role_text
+
+
 def _sync_hod_course(course, user, role_name):
     existing_course = getattr(user, "hod_course", None)
     if existing_course and existing_course.id != getattr(course, "id", None):
@@ -102,6 +107,38 @@ def admin_home(request):
 
     holiday_data = get_nepali_holiday_dashboard_data()
 
+    pending_leave_requests = []
+    pending_staff_leaves = (
+        LeaveReportStaff.objects.select_related("staff__admin", "staff__course")
+        .filter(status=0)
+        .order_by("-created_at")
+    )
+    for leave in pending_staff_leaves:
+        staff = getattr(leave, "staff", None)
+        if not staff:
+            continue
+        if not (
+            _is_hod_role(staff.role)
+            or _is_coordinator_role(staff.role)
+            or _is_accountant_role(staff.role)
+        ):
+            continue
+        pending_leave_requests.append(
+            {
+                "kind": "Staff",
+                "name": f"{staff.admin.first_name} {staff.admin.last_name}".strip(),
+                "course": getattr(staff.course, "name", ""),
+                "date": leave.date,
+                "message": leave.message,
+                "created_at": leave.created_at,
+                "review_url": reverse("view_staff_leave"),
+            }
+        )
+        if len(pending_leave_requests) == 5:
+            break
+
+    scoped_leave_count = len(pending_leave_requests)
+
     class_routine = {
         "Monday": "General faculty meeting / HOD review",
         "Tuesday": "Department coordination",
@@ -132,11 +169,10 @@ def admin_home(request):
         "optional_holiday_rows": holiday_data["optional_holiday_rows"],
         "holiday_period_label": holiday_data["holiday_period_label"],
         "class_routine": class_routine,
-        "clearance_request_count": LeaveReportStaff.objects.filter(status=0).count(),
-        "library_books_count": Book.objects.count(),
+        "clearance_request_count": scoped_leave_count,
         "leave_balance_count": LeaveReportStudent.objects.filter(status=1).count(),
-        "pending_leave_count": LeaveReportStaff.objects.filter(status=0).count()
-        + LeaveReportStudent.objects.filter(status=0).count(),
+        "pending_leave_count": scoped_leave_count,
+        "pending_leave_title": "Pending Staff Leave Requests",
     }
     return render(request, "hod_template/home_content.html", context)
 
@@ -545,8 +581,31 @@ def staff_feedback_message(request):
 
 @csrf_exempt
 def view_staff_leave(request):
+    current_staff = Staff.objects.filter(admin=request.user).first()
     if request.method != "POST":
-        allLeave = LeaveReportStaff.objects.all()
+        if str(getattr(request.user, "user_type", "")) == "1":
+            allLeave = [
+                leave
+                for leave in LeaveReportStaff.objects.select_related(
+                    "staff__admin", "staff__course"
+                ).filter(status=0)
+                if leave.staff
+                and (
+                    _is_hod_role(leave.staff.role)
+                    or _is_coordinator_role(leave.staff.role)
+                    or _is_accountant_role(leave.staff.role)
+                )
+            ]
+        elif current_staff and _is_hod_role(current_staff.role):
+            allLeave = [
+                leave
+                for leave in LeaveReportStaff.objects.select_related(
+                    "staff__admin", "staff__course"
+                ).filter(status=0, staff__course=current_staff.course)
+                if leave.staff and _is_teacher_role(leave.staff.role)
+            ]
+        else:
+            allLeave = []
         context = {"allLeave": allLeave, "page_title": "Leave Applications From Staff"}
         return render(request, "hod_template/staff_leave_view.html", context)
     else:
@@ -558,17 +617,44 @@ def view_staff_leave(request):
             status = -1
         try:
             leave = get_object_or_404(LeaveReportStaff, id=id)
-            leave.status = status
-            leave.save()
-            return HttpResponse(True)
+            allowed = False
+            if str(getattr(request.user, "user_type", "")) == "1":
+                allowed = leave.staff and (
+                    _is_hod_role(leave.staff.role)
+                    or _is_coordinator_role(leave.staff.role)
+                    or _is_accountant_role(leave.staff.role)
+                )
+            elif current_staff and _is_hod_role(current_staff.role):
+                allowed = (
+                    leave.staff
+                    and _is_teacher_role(leave.staff.role)
+                    and getattr(leave.staff.course, "id", None)
+                    == getattr(current_staff.course, "id", None)
+                )
+
+            if allowed:
+                leave.status = status
+                leave.save()
+                return HttpResponse(True)
+            return HttpResponse(False)
         except Exception as e:
             return False
 
 
 @csrf_exempt
 def view_student_leave(request):
+    current_staff = Staff.objects.filter(admin=request.user).first()
     if request.method != "POST":
-        allLeave = LeaveReportStudent.objects.all()
+        if current_staff and _is_teacher_role(current_staff.role):
+            allLeave = [
+                leave
+                for leave in LeaveReportStudent.objects.select_related(
+                    "student__admin", "student__course"
+                ).filter(status=0, student__course=current_staff.course)
+                if leave.student
+            ]
+        else:
+            allLeave = []
         context = {
             "allLeave": allLeave,
             "page_title": "Leave Applications From Students",
@@ -583,9 +669,17 @@ def view_student_leave(request):
             status = -1
         try:
             leave = get_object_or_404(LeaveReportStudent, id=id)
-            leave.status = status
-            leave.save()
-            return HttpResponse(True)
+            allowed = False
+            if current_staff and _is_teacher_role(current_staff.role):
+                allowed = leave.student and getattr(
+                    leave.student.course, "id", None
+                ) == getattr(current_staff.course, "id", None)
+
+            if allowed:
+                leave.status = status
+                leave.save()
+                return HttpResponse(True)
+            return HttpResponse(False)
         except Exception as e:
             return False
 
@@ -629,7 +723,11 @@ def admin_view_profile(request):
     context = {
         "form": form,
         "page_title": "View/Edit Profile",
-        "current_profile_pic": getattr(admin.admin.profile_pic, "url", "") if getattr(admin.admin, "profile_pic", None) else "",
+        "current_profile_pic": (
+            getattr(admin.admin.profile_pic, "url", "")
+            if getattr(admin.admin, "profile_pic", None)
+            else ""
+        ),
     }
     if request.method == "POST":
         try:

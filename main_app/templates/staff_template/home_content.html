@@ -111,6 +111,45 @@
             <!-- right col -->
         </div>
         <!-- /.row (main row) -->
+
+        {% if pending_leave_requests %}
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="card card-secondary">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">{{ pending_leave_title|default:'Pending Leave Requests' }}</h3>
+                <a href="{% url 'view_student_leave' %}" class="btn btn-sm btn-light">Review All</a>
+              </div>
+              <div class="card-body table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Name</th>
+                      <th>Course</th>
+                      <th>Date</th>
+                      <th>Message</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for leave in pending_leave_requests %}
+                    <tr>
+                      <td><span class="badge bg-warning text-dark">{{ leave.kind }}</span></td>
+                      <td>{{ leave.name }}</td>
+                      <td>{{ leave.course|default:'-' }}</td>
+                      <td>{{ leave.date }}</td>
+                      <td style="max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ leave.message }}</td>
+                      <td><a href="{{ leave.review_url }}" class="btn btn-sm btn-outline-secondary">Open</a></td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
     </div><!-- /.container-fluid -->
 </section>
 {% endblock content %}
