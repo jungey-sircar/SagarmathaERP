@@ -36,6 +36,42 @@
             border-color: #1f3a68 !important;
         }
     </style>
+    <style>
+        /* Responsive navbar fixes */
+        .erpnext-navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #fff;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            z-index: 1050;
+        }
+
+        .erpnext-navbar .navbar-left { display:flex; align-items:center; gap:0.5rem; }
+        .erpnext-navbar .navbar-brand { font-weight:600; margin-left:0.5rem; text-decoration:none; color:inherit }
+        .erpnext-navbar .navbar-toggle { background:transparent; border:0; font-size:1.1rem; color:inherit }
+
+        .erpnext-navbar .navbar-user { display:flex; align-items:center; gap:0.5rem }
+        .erpnext-navbar .logout-text { margin-left:0.25rem }
+
+        /* Mobile behaviour */
+        .mobile-nav-toggle { display:none; border:0; background:transparent; font-size:1.2rem }
+        .mobile-nav { display:none; position:absolute; top:100%; right:0; left:0; background:#fff; border-bottom:1px solid rgba(0,0,0,0.06); box-shadow:0 6px 18px rgba(20,20,20,0.06); z-index:1040 }
+        .mobile-nav .mobile-item { padding:0.5rem 1rem; border-top:1px solid rgba(0,0,0,0.02) }
+
+        @media (max-width: 991.98px) {
+            .erpnext-navbar .logout-text { display:none }
+            .erpnext-navbar .theme-toggle { display:none }
+            .erpnext-navbar .dropdown { display:none }
+            .erpnext-navbar .mobile-nav-toggle { display:inline-block }
+        }
+
+        @media (min-width: 992px) {
+            .mobile-nav { display:none !important }
+        }
+    </style>
 </head>
 
 <body>
@@ -84,8 +120,15 @@
                 <i class="fas fa-sign-out-alt"></i>
                 <span class="logout-text">Logout</span>
             </a>
+            <!-- Mobile menu toggle (visible on small screens) -->
+            <button class="mobile-nav-toggle btn btn-sm" id="mobileNavToggle" aria-expanded="false" aria-label="Open menu">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
         </div>
     </nav>
+
+    <!-- Mobile Nav (cloned content for small screens) -->
+    <div class="mobile-nav" id="mobileNav" aria-hidden="true"></div>
 
     <!-- Sidebar -->
     <aside class="erpnext-sidebar">
@@ -531,6 +574,74 @@
                     }, 50);
                 }
             });
+        });
+
+        // Mobile nav cloning and toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileToggle = document.getElementById('mobileNavToggle');
+            const mobileNav = document.getElementById('mobileNav');
+
+            function buildMobileNav() {
+                if (!mobileNav) return;
+                mobileNav.innerHTML = ''; // clear
+
+                // Clone modules dropdown (if present)
+                const modulesMenu = document.getElementById('modulesDropdownMenu');
+                if (modulesMenu) {
+                    const clone = modulesMenu.cloneNode(true);
+                    clone.style.display = 'block';
+                    // convert list items to mobile items
+                    Array.from(clone.querySelectorAll('li')).forEach(li => {
+                        const a = li.querySelector('a');
+                        if (a) {
+                            const div = document.createElement('div');
+                            div.className = 'mobile-item';
+                            div.appendChild(a.cloneNode(true));
+                            mobileNav.appendChild(div);
+                        }
+                    });
+                }
+
+                // Add profile / logout actions
+                const userActions = document.createElement('div');
+                userActions.className = 'mobile-item';
+                userActions.innerHTML = '<a class="d-block" href="' + (document.querySelector('.erpnext-navbar .navbar-brand')?.href || '#') + '">Dashboard</a>';
+                mobileNav.appendChild(userActions);
+
+                const logout = document.createElement('div');
+                logout.className = 'mobile-item';
+                const logoutLink = document.querySelector('.logout-btn');
+                if (logoutLink) {
+                    logout.appendChild(logoutLink.cloneNode(true));
+                    mobileNav.appendChild(logout);
+                }
+            }
+
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const isOpen = mobileNav.style.display === 'block';
+                    if (isOpen) {
+                        mobileNav.style.display = 'none';
+                        mobileNav.setAttribute('aria-hidden', 'true');
+                        mobileToggle.setAttribute('aria-expanded', 'false');
+                    } else {
+                        buildMobileNav();
+                        mobileNav.style.display = 'block';
+                        mobileNav.setAttribute('aria-hidden', 'false');
+                        mobileToggle.setAttribute('aria-expanded', 'true');
+                    }
+                });
+
+                // Close mobile nav when clicking outside
+                document.addEventListener('click', function(ev) {
+                    if (!mobileNav.contains(ev.target) && !mobileToggle.contains(ev.target)) {
+                        mobileNav.style.display = 'none';
+                        mobileNav.setAttribute('aria-hidden', 'true');
+                        mobileToggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
         });
     </script>
     
