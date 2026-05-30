@@ -466,6 +466,50 @@ class BookLoan(models.Model):
         return self.returned_on is not None
 
 
+class Holiday(models.Model):
+    """Editable Nepali holiday record. Replaces the hardcoded curated list
+    once data has been seeded into the database."""
+    bs_date = models.CharField(max_length=10, help_text="BS date as YYYY/MM/DD e.g. 2083/06/24")
+    name = models.CharField(max_length=255, help_text="Nepali / Devanagari name")
+    remarks = models.CharField(max_length=255, blank=True, help_text="English remark or context")
+    is_holiday = models.BooleanField(default=True, help_text="Government public holiday")
+    is_optional = models.BooleanField(default=False, help_text="Optional / cultural day")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['bs_date']
+
+    def __str__(self):
+        return f"{self.bs_date} — {self.name}"
+
+
+class HolidaySettings(models.Model):
+    """Singleton record (id=1) that controls the dashboard holiday range."""
+    range_start = models.CharField(max_length=10, default='2083/02/15')
+    range_end = models.CharField(max_length=10, default='2084/03/32')
+    period_label = models.CharField(max_length=120, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Holiday Settings'
+        verbose_name_plural = 'Holiday Settings'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        if not self.period_label:
+            self.period_label = f"Holidays from {self.range_start} to {self.range_end}"
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return self.period_label or f"{self.range_start} → {self.range_end}"
+
+
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
     if not created:

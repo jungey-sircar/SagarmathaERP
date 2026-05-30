@@ -171,6 +171,8 @@ urlpatterns = [
     path("academic/lesson-plans/", extra_views.lesson_plans, name="lesson_plans"),
     # Library management
     path("library/manage/", extra_views.library_manage, name="library_manage"),
+    # Holiday administration
+    path("admin/holidays/", extra_views.holiday_admin, name="holiday_admin"),
     path(
         "staff/attendance/fetch/",
         staff_views.get_student_attendance,

@@ -31,6 +31,8 @@ from .models import (
     BookLoan,
     Course,
     CustomUser,
+    Holiday,
+    HolidaySettings,
     InventoryItem,
     KaajRequest,
     LeaveReportStaff,
@@ -651,3 +653,93 @@ def payslip_pdf(request, payslip_id):
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+# ---------- Holiday Admin (CRUD + range settings) ----------
+
+def _user_can_manage_holidays(user):
+    """Admin (user_type=1) or HOD-role staff."""
+    if not user.is_authenticated:
+        return False
+    if user.user_type == '1':
+        return True
+    staff = Staff.objects.filter(admin=user).first()
+    if not staff:
+        return False
+    role = (staff.role or '').strip().lower()
+    return role.startswith('hod') or 'head of department' in role
+
+
+def holiday_admin(request):
+    if not _user_can_manage_holidays(request.user):
+        messages.error(request, 'You do not have permission to edit holidays.')
+        if request.user.user_type == '2':
+            return redirect(reverse('staff_home'))
+        return redirect(reverse('login_page'))
+
+    settings_obj = HolidaySettings.get_solo()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'save_settings':
+            start = (request.POST.get('range_start') or '').strip()
+            end = (request.POST.get('range_end') or '').strip()
+            label = (request.POST.get('period_label') or '').strip()
+            if start and end:
+                settings_obj.range_start = start
+                settings_obj.range_end = end
+                settings_obj.period_label = label or f'Holidays from {start} to {end}'
+                settings_obj.save()
+                messages.success(request, 'Holiday display range updated.')
+            else:
+                messages.error(request, 'Both start and end dates are required.')
+            return redirect(reverse('holiday_admin'))
+
+        if action == 'add':
+            try:
+                Holiday.objects.create(
+                    bs_date=(request.POST.get('bs_date') or '').strip(),
+                    name=(request.POST.get('name') or '').strip(),
+                    remarks=(request.POST.get('remarks') or '').strip(),
+                    is_holiday=request.POST.get('is_holiday') == 'on',
+                    is_optional=request.POST.get('is_optional') == 'on',
+                )
+                messages.success(request, 'Holiday added.')
+            except Exception as exc:
+                messages.error(request, f'Could not add: {exc}')
+            return redirect(reverse('holiday_admin'))
+
+        if action == 'update':
+            h = get_object_or_404(Holiday, id=request.POST.get('id'))
+            h.bs_date = (request.POST.get('bs_date') or h.bs_date).strip()
+            h.name = (request.POST.get('name') or h.name).strip()
+            h.remarks = (request.POST.get('remarks') or '').strip()
+            h.is_holiday = request.POST.get('is_holiday') == 'on'
+            h.is_optional = request.POST.get('is_optional') == 'on'
+            h.save()
+            messages.success(request, 'Holiday updated.')
+            return redirect(reverse('holiday_admin'))
+
+        if action == 'delete':
+            Holiday.objects.filter(id=request.POST.get('id')).delete()
+            messages.success(request, 'Holiday removed.')
+            return redirect(reverse('holiday_admin'))
+
+        if action == 'reseed':
+            Holiday.objects.all().delete()
+            from .holiday_service import _seed_db_from_curated_if_empty
+            _seed_db_from_curated_if_empty()
+            messages.success(request, 'Curated baseline re-imported.')
+            return redirect(reverse('holiday_admin'))
+
+    holidays = Holiday.objects.all().order_by('bs_date')
+    return render(request, 'modules/holiday_admin.html', {
+        'page_title': 'Holiday Management',
+        'holidays': holidays,
+        'total_count': holidays.count(),
+        'holiday_count': holidays.filter(is_holiday=True).count(),
+        'optional_count': holidays.filter(is_optional=True, is_holiday=False).count(),
+        'settings': settings_obj,
+    })
+

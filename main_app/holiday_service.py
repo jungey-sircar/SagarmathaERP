@@ -338,25 +338,61 @@ def _in_range(bs_string, start_tuple, end_tuple):
     return start_tuple <= _parse_bs_date(bs_string) <= end_tuple
 
 
+def _seed_db_from_curated_if_empty():
+    """First-time bootstrap: copy curated rows into the editable Holiday
+    table so the admin page has data to edit."""
+    from .models import Holiday
+    from .holiday_data import BS_2083_HOLIDAYS, BS_2084_HOLIDAYS
+
+    if Holiday.objects.exists():
+        return
+    bulk = []
+    for entry in BS_2083_HOLIDAYS + BS_2084_HOLIDAYS:
+        bulk.append(Holiday(
+            bs_date=entry['date'],
+            name=entry['name'],
+            remarks=entry.get('remarks', ''),
+            is_holiday=bool(entry.get('holiday', False)),
+            is_optional=bool(entry.get('specialday', False)),
+        ))
+    if bulk:
+        Holiday.objects.bulk_create(bulk)
+
+
 def get_nepali_holiday_dashboard_data(reference_date: date | None = None):
     """Build the HOD dashboard holiday card.
 
-    Primary source is the curated `holiday_data.get_curated_rows()` dataset
-    (real, vetted Nepali public holidays for BS 2083-2084). The previous
-    live scraper produced duplicate / repeating rows so it is no longer
-    consulted for the displayed range.
+    Primary source: editable `Holiday` rows in the database (managed via
+    `/admin/holidays/`). On first run we copy the curated baseline from
+    `holiday_data.py` into the DB so the admin page is never empty.
+    Range is configurable via `HolidaySettings`.
     """
-    from .holiday_data import get_curated_rows
+    from .models import Holiday, HolidaySettings
 
-    rows = get_curated_rows()
+    _seed_db_from_curated_if_empty()
+    settings_obj = HolidaySettings.get_solo()
 
-    # Configurable range: HOD dashboard now displays Holidays from
-    # 2083/02/15 to 2084/03/32 (BS) per requirement.
-    range_start = (2083, 2, 15)
-    range_end = (2084, 3, 32)
-    period_label = "Holidays from 2083/02/15 to 2084/03/32"
+    range_start = _parse_bs_date(settings_obj.range_start)
+    range_end = _parse_bs_date(settings_obj.range_end)
+    period_label = (
+        settings_obj.period_label
+        or f"Holidays from {settings_obj.range_start} to {settings_obj.range_end}"
+    )
 
-    rows = [r for r in rows if _in_range(r["from"], range_start, range_end)]
+    db_rows = Holiday.objects.all()
+    rows = []
+    for h in db_rows:
+        if not _in_range(h.bs_date, range_start, range_end):
+            continue
+        rows.append({
+            "name": h.name,
+            "from": h.bs_date,
+            "to": h.bs_date,
+            "remarks": h.remarks or h.name,
+            "holiday": bool(h.is_holiday),
+            "specialday": bool(h.is_optional),
+            "events": [h.name],
+        })
     rows.sort(key=lambda r: r["from"])
 
     holiday_rows = [r for r in rows if r.get("holiday")]
@@ -368,7 +404,7 @@ def get_nepali_holiday_dashboard_data(reference_date: date | None = None):
                 "name": "No holiday data available",
                 "from": "-",
                 "to": "-",
-                "remarks": "Static dataset empty",
+                "remarks": "Add some on the Holidays admin page.",
                 "holiday": True,
                 "specialday": False,
             },

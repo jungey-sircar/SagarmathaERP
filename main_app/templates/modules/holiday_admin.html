@@ -1,0 +1,104 @@
+{% extends 'main_app/base.html' %}
+{% block page_title %}Holiday Management{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Holiday Management</li>{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+    <div class="col-lg-4 col-md-6">
+        <div class="card shadow-sm border-0 h-100"><div class="card-body">
+            <div class="text-uppercase small fw-semibold text-muted">Total Entries</div>
+            <h2 class="mb-0 mt-2" data-testid="holiday-total">{{ total_count }}</h2>
+        </div></div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+        <div class="card shadow-sm border-0 h-100"><div class="card-body">
+            <div class="text-uppercase small fw-semibold text-muted">Public Holidays</div>
+            <h2 class="mb-0 mt-2 text-primary" data-testid="holiday-public">{{ holiday_count }}</h2>
+        </div></div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+        <div class="card shadow-sm border-0 h-100"><div class="card-body">
+            <div class="text-uppercase small fw-semibold text-muted">Optional / Cultural</div>
+            <h2 class="mb-0 mt-2 text-warning" data-testid="holiday-optional">{{ optional_count }}</h2>
+        </div></div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-white"><h5 class="mb-0">Display Range (per-college setting)</h5></div>
+    <div class="card-body">
+        <form method="post" class="row g-3" data-testid="holiday-settings-form">
+            {% csrf_token %}<input type="hidden" name="action" value="save_settings">
+            <div class="col-md-3"><label class="form-label">Range Start (BS)</label>
+                <input class="form-control" name="range_start" value="{{ settings.range_start }}" placeholder="2083/02/15" required data-testid="input-range-start"></div>
+            <div class="col-md-3"><label class="form-label">Range End (BS)</label>
+                <input class="form-control" name="range_end" value="{{ settings.range_end }}" placeholder="2084/03/32" required data-testid="input-range-end"></div>
+            <div class="col-md-5"><label class="form-label">Display Label (optional)</label>
+                <input class="form-control" name="period_label" value="{{ settings.period_label }}" placeholder="Auto from start/end if blank"></div>
+            <div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit" data-testid="btn-save-settings">Save</button></div>
+        </form>
+        <p class="text-muted small mb-0 mt-2">Currently displayed on HOD dashboard: <strong>{{ settings.period_label }}</strong></p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Add New Holiday</h5>
+        <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="reseed">
+            <button type="submit" class="btn btn-sm btn-outline-secondary" data-testid="btn-reseed" onclick="return confirm('Erase all current holiday entries and re-import the curated baseline?');">Re-import curated baseline</button>
+        </form>
+    </div>
+    <div class="card-body">
+        <form method="post" class="row g-3" data-testid="holiday-add-form">
+            {% csrf_token %}<input type="hidden" name="action" value="add">
+            <div class="col-md-2"><label class="form-label">BS Date</label>
+                <input class="form-control" name="bs_date" placeholder="2083/06/24" required data-testid="input-bs-date"></div>
+            <div class="col-md-3"><label class="form-label">Name (Devanagari)</label>
+                <input class="form-control" name="name" placeholder="घटस्थापना" required data-testid="input-name"></div>
+            <div class="col-md-4"><label class="form-label">Remarks (English)</label>
+                <input class="form-control" name="remarks" placeholder="Ghatasthapana — Dashain begins" data-testid="input-remarks"></div>
+            <div class="col-md-3 d-flex align-items-end gap-3">
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="is_holiday" id="is_h" checked data-testid="input-is-holiday"><label class="form-check-label" for="is_h">Public</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="is_optional" id="is_o" data-testid="input-is-optional"><label class="form-check-label" for="is_o">Optional</label></div>
+                <button class="btn btn-primary ms-auto" type="submit" data-testid="btn-add-holiday">Add</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white"><h5 class="mb-0">All Holiday Entries</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle" data-testid="holiday-table">
+                <thead class="table-dark"><tr><th>#</th><th>BS Date</th><th>Name</th><th>Remarks</th><th>Type</th><th style="width: 280px;">Actions</th></tr></thead>
+                <tbody>
+                {% for h in holidays %}
+                <tr data-testid="holiday-row-{{ h.id }}">
+                    <form method="post">
+                        {% csrf_token %}<input type="hidden" name="action" value="update"><input type="hidden" name="id" value="{{ h.id }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td><input class="form-control form-control-sm" name="bs_date" value="{{ h.bs_date }}" style="min-width: 110px;"></td>
+                        <td><input class="form-control form-control-sm" name="name" value="{{ h.name }}"></td>
+                        <td><input class="form-control form-control-sm" name="remarks" value="{{ h.remarks }}"></td>
+                        <td>
+                            <div class="form-check form-check-inline"><input type="checkbox" class="form-check-input" name="is_holiday" {% if h.is_holiday %}checked{% endif %}><label class="form-check-label small">Public</label></div>
+                            <div class="form-check form-check-inline"><input type="checkbox" class="form-check-input" name="is_optional" {% if h.is_optional %}checked{% endif %}><label class="form-check-label small">Optional</label></div>
+                        </td>
+                        <td>
+                            <button type="submit" class="btn btn-sm btn-primary" data-testid="btn-update-{{ h.id }}">Save</button>
+                    </form>
+                            <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="{{ h.id }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" data-testid="btn-delete-{{ h.id }}" onclick="return confirm('Delete this holiday?');">Delete</button>
+                            </form>
+                        </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No holidays yet. Click "Re-import curated baseline" to load the default Nepali holidays.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

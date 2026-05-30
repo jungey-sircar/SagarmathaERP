@@ -40,6 +40,11 @@
 - **`seed_demo`** extended with sample Kaaj, Optional Holiday, Substitute, 2 Store Requisitions, Assignment, Study Material, Lesson Plan, Assessment Mark and BookLoan.
 - **Nepali calendar block on HOD dashboard left untouched** — re-verified by automated tests, devanagari rows render.
 
+### Iteration 5 — Holiday admin UI + per-college settings
+- New models `Holiday` (bs_date, name, remarks, is_holiday, is_optional) and `HolidaySettings` (singleton row holding range_start / range_end / period_label). Migration 0011.
+- `holiday_service.get_nepali_holiday_dashboard_data` now reads from the `Holiday` table and respects the editable `HolidaySettings` range/label. First-time bootstrap (`_seed_db_from_curated_if_empty`) copies the curated baseline from `holiday_data.py` into the DB so the admin page is never empty.
+- New page **`/admin/holidays/`** (`extra_views.holiday_admin`): KPI strip (Total / Public / Optional counts), Display-Range form, Add-Holiday form, inline-editable table with per-row Save + Delete forms, and a "Re-import curated baseline" recovery button. Accessible to admin (user_type=1) and HOD-role staff. Link added to (a) Modules dropdown and (b) a "Manage" button beside the holiday-card title on the HOD dashboard.
+- End-to-end verified: add custom holiday → appears in HOD dashboard table; change range/label → HOD dashboard reflects immediately; delete → removed; re-seed → curated baseline restored.
 ### Iteration 4 — Per-role dashboards + holiday range
 - Holiday service now filters to BS range **2083/02/15 → 2084/03/32** and renders the heading **"Holidays from 2083/02/15 to 2084/03/32"** exactly as requested.
 - `staff_views.staff_home` now branches on role to **7 distinct dashboards**: Admin (already existed), HOD (`hod_dashboard.html`), Teacher (`home_content.html`), Coordinator, Academic Incharge, **Store Manager** (`store_manager_dashboard.html` — Total Items / Total Quantity / Low Stock Alerts / Pending Requisitions + Low Stock + Recent Requisitions tables), **Accountant** (`accountant_dashboard.html` — Total Payslips / Paid / Pending / Total Payroll NPR + Recent Payslips with PDF download + Quick Actions), **Library Admin** (`library_admin_dashboard.html` — Total Books / Active Loans / Overdue / Returned + Active Loans + Recent Returns), Student.
@@ -52,6 +57,7 @@
 - iteration_2.json: ~98% pass.
 - iteration_3.json: 100% pass (9/9).
 - iteration_4.json: 87.5% on first run (one specific authorization bug: Accountant couldn't download payslip PDFs → fixed by adding Accountant/Finance roles to `payslip_pdf` allow-list). Manual retest after fix: HTTP 200, valid `%PDF-1.4` binary served to Accountant — issue resolved.
+- iteration_5 (manual end-to-end): Holiday Management page renders KPI strip (47/37/10), range form, add form, inline-editable table. Verified add → table updates + appears on HOD dashboard, range change → HOD dashboard label updates immediately, delete → removed, re-import baseline → restores curated rows. Admin (user_type=1) and HOD-role staff can access; other staff get redirect.
 
 ### Iteration 3 — P2 + cosmetic polish
 - **`CustomUser.must_change_password`** field + migration 0010; middleware loops every authenticated request to `/account/change-password/` until cleared.
