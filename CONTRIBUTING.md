@@ -62,7 +62,7 @@ We are committed to making this a welcoming space for everyone regardless of
 experience level, background, or identity. Harassment, discrimination, or
 disrespectful behavior of any kind will not be tolerated.
 
-**To report a violation:** Email **ansmajidali@gmail.com** — all reports are
+**To report a violation:** Email **eric@example.com** — all reports are
 handled confidentially.
 
 ---
@@ -604,7 +604,7 @@ created and labeled `enhancement`.
 **Do NOT report security vulnerabilities in public issues.**
 
 If you discover a security vulnerability, please email
-**ansmajidali@gmail.com** directly with:
+**eric@example.com** directly with:
 
 - A description of the vulnerability
 - Steps to reproduce it
@@ -914,7 +914,7 @@ If you want to propose something not on this list, start a
 |---------|---------|
 | [GitHub Discussions](https://github.com/Ansarimajid/College-ERP/discussions) | Feature ideas, setup questions, general conversation |
 | [GitHub Issues](https://github.com/Ansarimajid/College-ERP/issues) | Confirmed bugs and approved feature requests only |
-| [Email](mailto:ansmajidali@gmail.com) | Security vulnerabilities, Code of Conduct reports |
+| [Email](mailto:eric@example.com) | Security vulnerabilities, Code of Conduct reports |
 
 **Response times:**
 - GitHub Discussions: within 24–48 hours

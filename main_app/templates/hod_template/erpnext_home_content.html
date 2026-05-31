@@ -285,8 +285,8 @@
 <div class="dashboard-shell">
     <div class="dashboard-hero">
         <div>
-            <h2>Dashboard</h2>
-            <p>Head of Department overview for faculty coordination, approvals, and academic monitoring.</p>
+            <h2>Welcome back{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}.</h2>
+            <p>Here's your dashboard to review approvals, pending requests, and quick actions. Need help? Use Quick Links or contact your team.</p>
         </div>
         <div class="module-chip">
             <small>Modules</small>

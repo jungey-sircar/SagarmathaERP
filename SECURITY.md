@@ -48,7 +48,7 @@ puts all users of this software at risk.
 
 Send a detailed email to:
 
-**📧 ansmajidali@gmail.com**
+**📧 eric@example.com**
 
 Use the subject line:
 ```
@@ -91,7 +91,7 @@ Please provide as much of the following as possible:
 ### Encryption (optional)
 
 If your report contains highly sensitive details, you may request our PGP
-public key before sending by emailing ansmajidali@gmail.com with the subject
+public key before sending by emailing eric@example.com with the subject
 `[PGP KEY REQUEST]`.
 
 ---
@@ -461,7 +461,7 @@ listed here with your name/handle and the nature of the finding.
 
 | Purpose | Contact |
 |---------|---------|
-| Security vulnerabilities | ansmajidali@gmail.com (**private — use for security only**) |
+| Security vulnerabilities | eric@example.com (**private — use for security only**) |
 | General bugs | [GitHub Issues](https://github.com/Ansarimajid/College-ERP/issues) |
 | Questions & ideas | [GitHub Discussions](https://github.com/Ansarimajid/College-ERP/discussions) |
 | LinkedIn | [ansmajidali](https://www.linkedin.com/in/ansmajidali) |
@@ -473,6 +473,6 @@ listed here with your name/handle and the nature of the finding.
 *This security policy is reviewed and updated with each major release.*
 *Last updated: v2.0.0 — February 2026*
 
-**Majid Ali Ansari** · [GitHub](https://github.com/Ansarimajid) · [ansmajidali@gmail.com](mailto:ansmajidali@gmail.com)
+**Eric Rai** · [GitHub](https://github.com/Ansarimajid) · [eric@example.com](mailto:eric@example.com)
 
 </div>

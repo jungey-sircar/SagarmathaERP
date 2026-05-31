@@ -657,7 +657,7 @@ def _email_temp_password(user, temp_password):
     backend logs which is fine for dev/demo."""
     try:
         send_mail(
-            subject="Welcome to Sagarmatha College — Your Student Account",
+            subject="Welcome to Sagarmatha College — your student account is ready",
             message=(
                 f"Hello {user.first_name},\n\n"
                 "Your student account has been created.\n\n"
@@ -754,7 +754,10 @@ def change_password(request):
             user.must_change_password = False
             user.save()
             update_session_auth_hash(request, user)
-            messages.success(request, "Password changed. Welcome!")
+            messages.success(
+                request,
+                f"Your password has been updated — welcome back, {user.first_name}!",
+            )
             # Route by user_type
             if user.user_type == "1":
                 return redirect(reverse("admin_home"))
