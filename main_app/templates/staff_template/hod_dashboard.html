@@ -391,11 +391,8 @@
                 <h5 class="mb-0">Announcement</h5>
             </div>
             <div class="card-body">
-                {% if announcement_title %}<h6>{{ announcement_title }}</h6>{% endif %}
                 {% if announcement %}
                     <p class="mb-0">{{ announcement }}</p>
-                {% else %}
-                    <p class="text-muted mb-0">No announcements posted.</p>
                 {% endif %}
             </div>
         </div>

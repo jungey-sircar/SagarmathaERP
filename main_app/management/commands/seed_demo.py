@@ -359,12 +359,9 @@ class Command(BaseCommand):
             )
 
         # --- Announcement ---
-        if Announcement.objects.count() == 0:
-            Announcement.objects.create(
-                title="Welcome to Sagarmatha ERP",
-                body="All modules are now live. Use the Modules dropdown to navigate Pre Admissions, Admissions, Examination, HR, Inventory and more.",
-                audience="all",
-            )
+        # NOTE: Do not seed announcements by default. Admins should create
+        # announcements via the Django admin UI to avoid showing generic
+        # messages to all users. Leaving this section intentionally empty.
 
         # --- Kaaj requests ---
         if KaajRequest.objects.count() == 0:

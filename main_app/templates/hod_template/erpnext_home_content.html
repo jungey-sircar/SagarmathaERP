@@ -285,8 +285,16 @@
 <div class="dashboard-shell">
     <div class="dashboard-hero">
         <div>
-            <h2>Welcome back{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}.</h2>
-            <p>Here's your dashboard to review approvals, pending requests, and quick actions. Need help? Use Quick Links or contact your team.</p>
+            <h2>
+                {% if user.first_name %}
+                    Welcome back, {{ user.first_name }}
+                {% elif request.user.first_name %}
+                    Welcome back, {{ request.user.first_name }}
+                {% else %}
+                    Welcome back
+                {% endif %}
+            </h2>
+            <p>Here's your dashboard to review approvals, pending requests, and quick actions. Need help? Use Quick Links or ask a colleague.</p>
         </div>
         <div class="module-chip">
             <small>Modules</small>

@@ -342,6 +342,12 @@ class Announcement(models.Model):
         choices=(("all", "All"), ("staff", "Staff"), ("students", "Students")),
         default="all",
     )
+    targets = models.ManyToManyField(
+        "Staff",
+        blank=True,
+        related_name="announcements",
+        help_text="Optional: target this announcement to specific staff members (overrides audience for those staff).",
+    )
     published_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import *
 from .models import *
 from . import forms, models
+from django.db.models import Q
 from .holiday_service import get_nepali_holiday_dashboard_data
 from datetime import date
 
@@ -124,7 +125,15 @@ def staff_home(request):
         ) = _department_context(staff)
         holiday_data = get_nepali_holiday_dashboard_data()
 
-        latest_announcement = Announcement.objects.first()
+        # Only show announcements targeted to staff or explicitly for this staff member.
+        try:
+            latest_announcement = (
+                Announcement.objects.filter(Q(audience="staff") | Q(targets=staff))
+                .order_by("-published_at")
+                .first()
+            )
+        except Exception:
+            latest_announcement = None
 
         class_routine = [
             ("Sun", "Routine has not been uploaded for Sunday."),
@@ -195,13 +204,15 @@ def staff_home(request):
             "holiday_period_label": holiday_data["holiday_period_label"],
             "holiday_scroll_anchor": "2083/02/15",
             "class_routine": class_routine,
-            "announcement": latest_announcement.body if latest_announcement else "",
-            "announcement_title": (
-                latest_announcement.title if latest_announcement else ""
-            ),
+            "announcement": "",
+            "announcement_title": "",
             "pending_leave_requests": pending_leave_requests,
             "pending_leave_title": "Pending Teacher Leave Requests",
         }
+        if latest_announcement:
+            context["announcement"] = latest_announcement.body
+            context["announcement_title"] = latest_announcement.title
+
         return render(request, "staff_template/hod_dashboard.html", context)
 
     if _is_coordinator_role(role_text):
