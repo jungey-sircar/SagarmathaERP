@@ -303,13 +303,21 @@
     </div>
 
     <div class="summary-grid">
-        <div class="summary-card">
+        <a href="{% url 'hod_view_clearance' %}" class="summary-card">
             <div>
                 <div class="summary-label">Clearance Request</div>
                 <div class="summary-value">{{ clearance_request_count|default:0 }}</div>
             </div>
             <div class="summary-icon"><i class="fas fa-sticky-note"></i></div>
-        </div>
+        </a>
+        <a href="{% url 'view_student_leave' %}" class="summary-card">
+            <div>
+                <div class="summary-label">Pending Leave Requests</div>
+                <div class="summary-value">{{ pending_leave_count|default:0 }}</div>
+                <div class="summary-note">Leave requests pending</div>
+            </div>
+            <div class="summary-icon"><i class="fas fa-inbox"></i></div>
+        </a>
         <div class="summary-card">
             <div>
                 <div class="summary-label">Library</div>
@@ -325,14 +333,6 @@
             </div>
             <div class="summary-icon"><i class="fas fa-clipboard-check"></i></div>
         </div>
-        <div class="summary-card">
-            <div>
-                <div class="summary-label">Waiting for Your Approval</div>
-                <div class="summary-value">{{ pending_leave_count|default:0 }}</div>
-                <div class="summary-note">Leave requests pending</div>
-            </div>
-            <div class="summary-icon"><i class="fas fa-inbox"></i></div>
-        </div>
     </div>
 
     <div class="secondary-grid">
@@ -343,20 +343,20 @@
             </div>
             <i class="fas fa-user-tie summary-icon"></i>
         </div>
-        <div class="mini-card">
+        <a href="{% url 'hod_view_optional_holiday_requests' %}" class="mini-card">
             <div>
-                <strong>0</strong>
+                <strong>{{ optional_holiday_request_count|default:0 }}</strong>
                 <span>Optional Holiday</span>
             </div>
             <i class="fas fa-umbrella-beach summary-icon"></i>
-        </div>
-        <div class="mini-card">
+        </a>
+        <a href="{% url 'hod_view_kaaj_requests' %}" class="mini-card">
             <div>
-                <strong>0</strong>
+                <strong>{{ kaaj_request_count|default:0 }}</strong>
                 <span>Kaj/Tour</span>
             </div>
             <i class="fas fa-bus summary-icon"></i>
-        </div>
+        </a>
         <div class="mini-card">
             <div>
                 <strong>0</strong>

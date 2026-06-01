@@ -27,6 +27,18 @@ urlpatterns = [
     path("doLogin/", views.doLogin, name="user_login"),
     path("logout_user/", views.logout_user, name="user_logout"),
     path("admin/home/", hod_views.admin_home, name="admin_home"),
+    path("hod/home", hod_views.admin_home, name="hod_home"),
+    path("hod/view_clearance", hod_views.hod_view_clearance, name="hod_view_clearance"),
+    path(
+        "hod/view_optional_holiday_requests",
+        hod_views.hod_view_optional_holiday_requests,
+        name="hod_view_optional_holiday_requests",
+    ),
+    path(
+        "hod/view_kaaj_requests",
+        hod_views.hod_view_kaaj_requests,
+        name="hod_view_kaaj_requests",
+    ),
     path("staff/add", hod_views.add_staff, name="add_staff"),
     path("course/add", hod_views.add_course, name="add_course"),
     path(
@@ -142,35 +154,103 @@ urlpatterns = [
     path("selfservice/others/", views.others_dashboard, name="others_dashboard"),
     # Modules
     path("modules/pre-admissions/", module_views.pre_admissions, name="pre_admissions"),
+    path(
+        "modules/entrance-results/<int:year>/",
+        module_views.entrance_results_by_year,
+        name="entrance_results_by_year",
+    ),
+    path(
+        "modules/ioe-results-log/", module_views.ioe_results_log, name="ioe_results_log"
+    ),
     path("modules/admissions/", module_views.admissions, name="admissions"),
-    path("modules/admissions/<int:admission_id>/promote/", extra_views.promote_admission_to_student, name="promote_admission"),
-    path("modules/admissions/bulk-promote/", extra_views.bulk_promote_admissions, name="bulk_promote_admissions"),
-    path("account/change-password/", extra_views.change_password, name="change_password"),
-    path("selfservice/payslip/<int:payslip_id>/pdf/", extra_views.payslip_pdf, name="payslip_pdf"),
+    path(
+        "modules/admissions/<int:admission_id>/promote/",
+        extra_views.promote_admission_to_student,
+        name="promote_admission",
+    ),
+    path(
+        "modules/admissions/bulk-promote/",
+        extra_views.bulk_promote_admissions,
+        name="bulk_promote_admissions",
+    ),
+    path(
+        "modules/admissions/<int:year>/<int:course_id>/list/",
+        module_views.admissions_list,
+        name="admissions_list",
+    ),
+    path(
+        "account/change-password/", extra_views.change_password, name="change_password"
+    ),
+    path(
+        "selfservice/payslip/<int:payslip_id>/pdf/",
+        extra_views.payslip_pdf,
+        name="payslip_pdf",
+    ),
     path("modules/examination/", module_views.examination, name="examination"),
     path("modules/human-resource/", module_views.human_resource, name="human_resource"),
+    path(
+        "modules/human-resource/<int:staff_id>/details/",
+        module_views.employee_details,
+        name="employee_details",
+    ),
     path("modules/inventory/", module_views.inventory, name="inventory"),
+    path("modules/inventory/items/", module_views.inventory_items_list, name="inventory_items_list"),
+    path("modules/inventory/consumables/", module_views.inventory_consumables_list, name="inventory_consumables_list"),
+    path("modules/inventory/fixed/", module_views.inventory_fixed_list, name="inventory_fixed_list"),
+    path("modules/inventory/edit/<str:item_type>/<int:item_id>/", module_views.inventory_edit_item, name="inventory_edit_item"),
+    path("modules/attendance/", module_views.attendance_dashboard, name="attendance_dashboard"),
+    path("modules/attendance/mark/", module_views.mark_biometric_attendance, name="mark_biometric_attendance"),
+    path("modules/attendance/sync/", module_views.sync_biometric_data, name="sync_biometric_data"),
     # Leave / Kaaj / Optional Holiday / Substitute
     path("leave/leaves-applied/", extra_views.leaves_applied, name="leaves_applied"),
     path("leave/kaaj/apply/", extra_views.kaaj_apply, name="kaaj_apply"),
     path("leave/kaaj/list/", extra_views.kaaj_applied, name="kaaj_applied"),
-    path("leave/optional-holiday/apply/", extra_views.optional_holiday_apply, name="optional_holiday_apply"),
-    path("leave/optional-holiday/list/", extra_views.optional_holidays_applied, name="optional_holidays_applied"),
-    path("leave/substitute/apply/", extra_views.substitute_apply, name="substitute_apply"),
-    path("leave/substitute/list/", extra_views.substitutes_applied, name="substitutes_applied"),
+    path(
+        "leave/optional-holiday/apply/",
+        extra_views.optional_holiday_apply,
+        name="optional_holiday_apply",
+    ),
+    path(
+        "leave/optional-holiday/list/",
+        extra_views.optional_holidays_applied,
+        name="optional_holidays_applied",
+    ),
+    path(
+        "leave/substitute/apply/", extra_views.substitute_apply, name="substitute_apply"
+    ),
+    path(
+        "leave/substitute/list/",
+        extra_views.substitutes_applied,
+        name="substitutes_applied",
+    ),
     path("leave/substitute/mine/", extra_views.my_substitutes, name="my_substitutes"),
-    path("leave/approvals/", extra_views.requests_waiting_for_approval, name="requests_waiting_for_approval"),
+    path(
+        "leave/approvals/",
+        extra_views.requests_waiting_for_approval,
+        name="requests_waiting_for_approval",
+    ),
     # Store workflow
     path("store/requisition/", extra_views.requisition_form, name="requisition_form"),
-    path("store/requisitions/", extra_views.view_past_requisitions, name="view_past_requisitions"),
+    path(
+        "store/requisitions/",
+        extra_views.view_past_requisitions,
+        name="view_past_requisitions",
+    ),
     path("store/search/", extra_views.search_store_item, name="search_store_item"),
     # Academic
-    path("academic/assessment-marks/", extra_views.assessment_marks_entry, name="assessment_marks_entry"),
-    path("academic/study-materials/", extra_views.study_materials, name="study_materials"),
+    path(
+        "academic/assessment-marks/",
+        extra_views.assessment_marks_entry,
+        name="assessment_marks_entry",
+    ),
+    path(
+        "academic/study-materials/", extra_views.study_materials, name="study_materials"
+    ),
     path("academic/assignments/", extra_views.assignments, name="assignments"),
     path("academic/lesson-plans/", extra_views.lesson_plans, name="lesson_plans"),
     # Library management
     path("library/manage/", extra_views.library_manage, name="library_manage"),
+    path("modules/library/", module_views.library_dashboard, name="library_dashboard"),
     # Holiday administration
     path("admin/holidays/", extra_views.holiday_admin, name="holiday_admin"),
     path(

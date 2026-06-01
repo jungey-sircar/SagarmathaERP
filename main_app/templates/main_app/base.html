@@ -72,6 +72,129 @@
             .mobile-nav { display:none !important }
         }
     </style>
+    <style>
+        /* ── Secondary Module Navigation Bar ── */
+        .module-nav-bar {
+            background: #fff;
+            border-bottom: 1px solid #e0e4e8;
+            padding: 0.6rem 1rem;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            z-index: 100;
+            position: relative;
+        }
+        .module-nav-inner {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .module-nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.15rem;
+            border: 1.5px solid #c5cdd5;
+            border-radius: 22px;
+            background: #fff;
+            color: #333;
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            line-height: 1.4;
+        }
+        .module-nav-btn:hover {
+            background: #1f3a68;
+            color: #fff;
+            border-color: #1f3a68;
+            text-decoration: none;
+        }
+        .module-nav-btn i:first-child {
+            font-size: 0.85rem;
+        }
+
+        /* Dropdowns */
+        .module-nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .module-nav-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            background: #fff;
+            border: 1px solid #e0e4e8;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            z-index: 2000;
+            min-width: 180px;
+            padding: 0.3rem 0;
+        }
+        .module-nav-dropdown-menu.show {
+            display: block;
+        }
+        .module-nav-dropdown-menu a {
+            display: block;
+            padding: 0.45rem 1rem;
+            color: #333;
+            font-size: 0.82rem;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .module-nav-dropdown-menu a:hover {
+            background: #f0f4f8;
+            color: #1f3a68;
+        }
+
+        /* Responsive: scroll on small screens */
+        @media (max-width: 768px) {
+            .module-nav-inner {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .module-nav-inner::-webkit-scrollbar {
+                display: none;
+            }
+            .module-nav-btn {
+                font-size: 0.72rem;
+                padding: 0.3rem 0.7rem;
+            }
+        }
+
+        /* Dark mode */
+        .dark-mode .module-nav-bar {
+            background: #1e1e1e;
+            border-bottom-color: #333;
+        }
+        .dark-mode .module-nav-btn {
+            background: #2a2a2a;
+            color: #ccc;
+            border-color: #444;
+        }
+        .dark-mode .module-nav-btn:hover {
+            background: #3a6bc5;
+            color: #fff;
+            border-color: #3a6bc5;
+        }
+        .dark-mode .module-nav-dropdown-menu {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+        .dark-mode .module-nav-dropdown-menu a {
+            color: #ccc;
+        }
+        .dark-mode .module-nav-dropdown-menu a:hover {
+            background: #333;
+            color: #90caf9;
+        }
+    </style>
 </head>
 
 <body>
@@ -98,9 +221,9 @@
                     <li><a class="dropdown-item py-2" href="{% url 'admissions' %}">Admissions</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'examination' %}">Examination</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'human_resource' %}">Human Resource</a></li>
-                    <li><a class="dropdown-item py-2" href="{% url 'admin_view_attendance' %}">Attendance</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'attendance_dashboard' %}">Attendance</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'inventory' %}">Inventory</a></li>
-                    <li><a class="dropdown-item py-2" href="{% url 'library_manage' %}">Library</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'library_dashboard' %}">Library</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item py-2" href="{% url 'holiday_admin' %}" data-testid="modules-holiday-admin">Holiday Management</a></li>
                 </ul>
@@ -137,6 +260,85 @@
 
     <!-- Main Content -->
     <main class="erpnext-main" id="main-content">
+        {% if user.is_authenticated and user.user_type == '2' %}
+        <!-- Secondary Module Navigation Bar -->
+        <nav class="module-nav-bar" id="moduleNavBar">
+            <div class="module-nav-inner">
+                <a href="{% url 'staff_home' %}" class="module-nav-btn">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="{% url 'staff_view_profile' %}" class="module-nav-btn">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{% url 'attendance_dashboard' %}" class="module-nav-btn">
+                    <i class="fas fa-clipboard-check"></i> Attendance
+                </a>
+                <div class="module-nav-dropdown">
+                    <button class="module-nav-btn" onclick="toggleModuleDropdown(this)">
+                        <i class="fas fa-calendar-minus"></i> Leave/Kaaj <i class="fas fa-caret-down ms-1" style="font-size:0.65rem;"></i>
+                    </button>
+                    <div class="module-nav-dropdown-menu">
+                        <a href="{% url 'staff_apply_leave' %}">Apply Leave</a>
+                        <a href="{% url 'leaves_applied' %}">Leaves Applied</a>
+                        <a href="{% url 'kaaj_apply' %}">Apply Kaaj</a>
+                        <a href="{% url 'kaaj_applied' %}">Kaaj Applied</a>
+                        <a href="{% url 'leave_balance' %}">Leave Balance</a>
+                        <a href="{% url 'requests_waiting_for_approval' %}">Approvals</a>
+                    </div>
+                </div>
+                <a href="{% url 'payslip_dashboard' %}" class="module-nav-btn">
+                    <i class="fas fa-file-invoice-dollar"></i> Payslip
+                </a>
+                <div class="module-nav-dropdown">
+                    <button class="module-nav-btn" onclick="toggleModuleDropdown(this)">
+                        <i class="fas fa-store"></i> Store <i class="fas fa-caret-down ms-1" style="font-size:0.65rem;"></i>
+                    </button>
+                    <div class="module-nav-dropdown-menu">
+                        <a href="{% url 'store_dashboard' %}">Store Dashboard</a>
+                        <a href="{% url 'requisition_form' %}">Requisition Form</a>
+                        <a href="{% url 'view_past_requisitions' %}">View Requisitions</a>
+                        <a href="{% url 'search_store_item' %}">Search Store Item</a>
+                        <a href="{% url 'inventory' %}">Inventory</a>
+                    </div>
+                </div>
+                <div class="module-nav-dropdown">
+                    <button class="module-nav-btn" onclick="toggleModuleDropdown(this)">
+                        <i class="fas fa-book"></i> Library <i class="fas fa-caret-down ms-1" style="font-size:0.65rem;"></i>
+                    </button>
+                    <div class="module-nav-dropdown-menu">
+                        <a href="{% url 'library_dashboard' %}">Library Dashboard</a>
+                        <a href="{% url 'library_manage' %}">Manage Library</a>
+                        <a href="{% url 'books_in_hand' %}">My Books</a>
+                    </div>
+                </div>
+                <div class="module-nav-dropdown">
+                    <button class="module-nav-btn" onclick="toggleModuleDropdown(this)">
+                        <i class="fas fa-graduation-cap"></i> Academic <i class="fas fa-caret-down ms-1" style="font-size:0.65rem;"></i>
+                    </button>
+                    <div class="module-nav-dropdown-menu">
+                        <a href="{% url 'academic_dashboard' %}">Academic Dashboard</a>
+                        <a href="{% url 'assessment_marks_entry' %}">Assessment Marks</a>
+                        <a href="{% url 'study_materials' %}">Study Materials</a>
+                        <a href="{% url 'assignments' %}">Assignments</a>
+                        <a href="{% url 'lesson_plans' %}">Lesson Plans</a>
+                    </div>
+                </div>
+                <div class="module-nav-dropdown">
+                    <button class="module-nav-btn" onclick="toggleModuleDropdown(this)">
+                        <i class="fas fa-ellipsis-v"></i> Others <i class="fas fa-caret-down ms-1" style="font-size:0.65rem;"></i>
+                    </button>
+                    <div class="module-nav-dropdown-menu">
+                        <a href="{% url 'human_resource' %}">Human Resource</a>
+                        <a href="{% url 'examination' %}">Examination</a>
+                        <a href="{% url 'pre_admissions' %}">Pre Admissions</a>
+                        <a href="{% url 'admissions' %}">Admissions</a>
+                        <a href="{% url 'holiday_admin' %}">Holiday Management</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        {% endif %}
+
         <!-- Page Header -->
         <div class="page-header">
             <h1 class="page-title">{% block page_title %}Dashboard{% endblock page_title %}</h1>
@@ -643,6 +845,34 @@
                 });
             }
         });
+    </script>
+
+    <script>
+    /* Module Nav Bar dropdown toggle */
+    function toggleModuleDropdown(btn) {
+        var parent = btn.closest('.module-nav-dropdown');
+        var menu = parent.querySelector('.module-nav-dropdown-menu');
+        var isOpen = menu.classList.contains('show');
+
+        // Close all open dropdowns first
+        document.querySelectorAll('.module-nav-dropdown-menu.show').forEach(function(m) {
+            m.classList.remove('show');
+        });
+
+        // Toggle this one
+        if (!isOpen) {
+            menu.classList.add('show');
+        }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.module-nav-dropdown')) {
+            document.querySelectorAll('.module-nav-dropdown-menu.show').forEach(function(m) {
+                m.classList.remove('show');
+            });
+        }
+    });
     </script>
     
     {% block custom_js %}{% endblock custom_js %}

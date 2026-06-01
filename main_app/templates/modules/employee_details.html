@@ -1,0 +1,440 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}Employee Details{% endblock page_title %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'human_resource' %}">Human Resource</a></li>
+<li class="breadcrumb-item active">Employee Details</li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0">{{ employee.first_name }} {{ employee.last_name }} - {{ staff.division|default:"Administration" }} - {{ staff.role_detail|default:staff.role }}</h5>
+        </div>
+        <a href="{% url 'human_resource' %}" class="btn btn-sm btn-outline-secondary">Back to List</a>
+    </div>
+
+    <div class="card-body" id="messages">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="card-body">
+        <div class="row g-4 align-items-start mb-4">
+            <!-- Profile Image -->
+            <div class="col-lg-3">
+                <div class="border rounded bg-light p-3 text-center h-100">
+                    <div id="profile-pic-container" class="d-flex justify-content-center align-items-center mb-3" style="min-height: 160px;">
+                        {% if employee.profile_pic and employee.profile_pic.name %}
+                            <img id="profile-preview" src="{{ employee.profile_pic.url }}?v={{ employee.updated_at|date:'U' }}" alt="Profile" class="rounded border" style="max-width: 100%; max-height: 180px; object-fit: cover;">
+                        {% else %}
+                            <div id="profile-preview" class="rounded border bg-white d-flex align-items-center justify-content-center" style="width: 170px; height: 180px;">
+                                <i class="fas fa-user fa-4x text-muted"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <label for="profile-pic-input" class="btn btn-outline-primary btn-sm mb-2 w-100">
+                        <i class="fas fa-upload me-1"></i>Upload Image
+                    </label>
+                    <input type="file" id="profile-pic-input" name="profile_pic" accept="image/*" form="personal-form" class="d-none">
+                    <p class="text-muted small mt-3 mb-1">Employee Group</p>
+                    <p class="fw-semibold mb-0">{{ staff.course.name|default:"General" }}</p>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab">Personal Details</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="identification-tab" data-bs-toggle="tab" data-bs-target="#identification" type="button" role="tab">Identification Details</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="education-tab" data-bs-toggle="tab" data-bs-target="#education" type="button" role="tab">Education Details</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="promotion-tab" data-bs-toggle="tab" data-bs-target="#promotion" type="button" role="tab">Promotion History</button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Personal Details Tab -->
+                    <div class="tab-pane fade show active" id="personal" role="tabpanel">
+                        <form id="personal-form" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="tab" value="personal">
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">ID No.</label>
+                                    <input type="text" class="form-control" value="{{ staff.id }}" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Employee Group</label>
+                                    <input type="text" class="form-control" value="{{ staff.course.name|default:'General' }}" disabled>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="first_name" class="form-control" value="{{ employee.first_name }}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Middle Name</label>
+                                    <input type="text" name="middle_name" class="form-control" value="">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control" value="{{ employee.last_name }}" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Gender</label>
+                                    <select name="gender" class="form-select">
+                                        <option value="M" {% if employee.gender == 'M' %}selected{% endif %}>Male</option>
+                                        <option value="F" {% if employee.gender == 'F' %}selected{% endif %}>Female</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" value="{{ employee.email }}" disabled>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Address</label>
+                                    <input type="text" name="address" class="form-control" value="{{ employee.address }}">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Division</label>
+                                    <input type="text" name="division" class="form-control" value="{{ staff.division }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" name="department" class="form-control" value="{{ staff.department }}">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Level</label>
+                                    <input type="text" name="role_detail" class="form-control" value="{{ staff.role_detail }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Post</label>
+                                    <input type="text" name="role" class="form-control" value="{{ staff.role }}">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Type</label>
+                                    <select name="employment_type" class="form-select">
+                                        {% for value, label in employment_type_choices %}
+                                            <option value="{{ value }}" {% if staff.employment_type == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Duty Shift</label>
+                                    <input type="text" name="duty_shift" class="form-control" value="{{ staff.duty_shift }}" placeholder="e.g. 08:00 16:00">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Date of Join</label>
+                                    <input type="date" name="date_of_join" class="form-control" value="{% if staff.date_of_join %}{{ staff.date_of_join|date:'Y-m-d' }}{% endif %}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Permanent On</label>
+                                    <input type="date" name="permanent_on" class="form-control" value="{% if staff.permanent_on %}{{ staff.permanent_on|date:'Y-m-d' }}{% endif %}">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Promotion Date</label>
+                                    <input type="date" name="last_promotion_date" class="form-control" value="{% if staff.last_promotion_date %}{{ staff.last_promotion_date|date:'Y-m-d' }}{% endif %}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Contact No.</label>
+                                    <input type="text" name="contact_number" class="form-control" value="{{ staff.contact_number }}">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+
+                    <!-- Identification Details Tab -->
+                    <div class="tab-pane fade" id="identification" role="tabpanel">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="tab" value="identification">
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Name of Bank Account</label>
+                                    <input type="text" name="bank_name" class="form-control" value="{{ id_details.bank_name }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Account Number</label>
+                                    <input type="text" name="account_number" class="form-control" value="{{ id_details.account_number }}">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Citizenship Number</label>
+                                    <input type="text" name="citizenship_number" class="form-control" value="{{ id_details.citizenship_number }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Citizenship Date of Issue</label>
+                                    <input type="date" name="citizenship_issue_date" class="form-control" value="{% if id_details.citizenship_issue_date %}{{ id_details.citizenship_issue_date|date:'Y-m-d' }}{% endif %}">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Citizenship Place of Issue</label>
+                                    <input type="text" name="citizenship_issue_place" class="form-control" value="{{ id_details.citizenship_issue_place }}">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">PF Number</label>
+                                    <input type="text" name="pf_number" class="form-control" value="{{ id_details.pf_number }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">CIT Number</label>
+                                    <input type="text" name="cit_number" class="form-control" value="{{ id_details.cit_number }}">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">PAN Number</label>
+                                    <input type="text" name="pan_number" class="form-control" value="{{ id_details.pan_number }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Blood Group</label>
+                                    <select name="blood_group" class="form-select">
+                                        <option value="">Select Blood Group</option>
+                                        {% for value, label in blood_group_choices %}
+                                            <option value="{{ value }}" {% if id_details.blood_group == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+
+                    <!-- Education Details Tab -->
+                    <div class="tab-pane fade" id="education" role="tabpanel">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="tab" value="education">
+
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 15%">Level</th>
+                                            <th style="width: 20%">Title of Qualification</th>
+                                            <th style="width: 20%">Institution</th>
+                                            <th style="width: 12%">Passed Year</th>
+                                            <th style="width: 10%">%</th>
+                                            <th style="width: 20%">Specialization</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="education-rows">
+                                        {% for edu in education_details %}
+                                            <tr>
+                                                <td>
+                                                    <select name="education_level[]" class="form-select form-select-sm">
+                                                        {% for value, label in education_level_choices %}
+                                                            <option value="{{ value }}" {% if edu.level == value %}selected{% endif %}>{{ label }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+                                                <td><input type="text" name="education_qualification[]" class="form-control form-control-sm" value="{{ edu.title_of_qualification }}"></td>
+                                                <td><input type="text" name="education_institution[]" class="form-control form-control-sm" value="{{ edu.institution }}"></td>
+                                                <td><input type="number" name="education_year[]" class="form-control form-control-sm" value="{{ edu.passed_year|default:'' }}"></td>
+                                                <td><input type="number" step="0.01" name="education_percentage[]" class="form-control form-control-sm" value="{{ edu.percentage|default:'' }}"></td>
+                                                <td><input type="text" name="education_specialization[]" class="form-control form-control-sm" value="{{ edu.specialization }}"></td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td>
+                                                    <select name="education_level[]" class="form-select form-select-sm">
+                                                        <option value="">Select Level</option>
+                                                        {% for value, label in education_level_choices %}
+                                                            <option value="{{ value }}">{{ label }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+                                                <td><input type="text" name="education_qualification[]" class="form-control form-control-sm"></td>
+                                                <td><input type="text" name="education_institution[]" class="form-control form-control-sm"></td>
+                                                <td><input type="number" name="education_year[]" class="form-control form-control-sm"></td>
+                                                <td><input type="number" step="0.01" name="education_percentage[]" class="form-control form-control-sm"></td>
+                                                <td><input type="text" name="education_specialization[]" class="form-control form-control-sm"></td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addEducationRow()">+ Add More</button>
+                            <br>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+
+                    <!-- Promotion History Tab -->
+                    <div class="tab-pane fade" id="promotion" role="tabpanel">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="tab" value="promotion">
+
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 12%">Date</th>
+                                            <th style="width: 12%">Type</th>
+                                            <th style="width: 20%">From Level</th>
+                                            <th style="width: 20%">To Level</th>
+                                            <th style="width: 10%">Unpaid Leaves</th>
+                                            <th style="width: 20%">Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="promotion-rows">
+                                        {% for promo in promotion_history %}
+                                            <tr>
+                                                <td><input type="date" name="promo_date[]" class="form-control form-control-sm" value="{{ promo.date|date:'Y-m-d' }}"></td>
+                                                <td>
+                                                    <select name="promo_type[]" class="form-select form-select-sm">
+                                                        {% for value, label in promotion_type_choices %}
+                                                            <option value="{{ value }}" {% if promo.promotion_type == value %}selected{% endif %}>{{ label }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+                                                <td><input type="text" name="promo_from_level[]" class="form-control form-control-sm" value="{{ promo.from_level }}"></td>
+                                                <td><input type="text" name="promo_to_level[]" class="form-control form-control-sm" value="{{ promo.to_level }}"></td>
+                                                <td><input type="number" name="promo_unpaid_leaves[]" class="form-control form-control-sm" value="{{ promo.unpaid_leaves|default:0 }}"></td>
+                                                <td><input type="text" name="promo_remarks[]" class="form-control form-control-sm" value="{{ promo.remarks }}"></td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td><input type="date" name="promo_date[]" class="form-control form-control-sm"></td>
+                                                <td>
+                                                    <select name="promo_type[]" class="form-select form-select-sm">
+                                                        <option value="internal">Internal</option>
+                                                        <option value="external">External</option>
+                                                        <option value="lateral">Lateral</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="text" name="promo_from_level[]" class="form-control form-control-sm"></td>
+                                                <td><input type="text" name="promo_to_level[]" class="form-control form-control-sm"></td>
+                                                <td><input type="number" name="promo_unpaid_leaves[]" class="form-control form-control-sm" value="0"></td>
+                                                <td><input type="text" name="promo_remarks[]" class="form-control form-control-sm"></td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addPromotionRow()">+ Add More</button>
+                            <br>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS for tabs -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+function addEducationRow() {
+    const tbody = document.getElementById('education-rows');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td>
+            <select name="education_level[]" class="form-select form-select-sm">
+                <option value="">Select Level</option>
+                <option value="slc">SLC</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="bachelor">Bachelor</option>
+                <option value="master">Master</option>
+                <option value="phd">PhD</option>
+            </select>
+        </td>
+        <td><input type="text" name="education_qualification[]" class="form-control form-control-sm"></td>
+        <td><input type="text" name="education_institution[]" class="form-control form-control-sm"></td>
+        <td><input type="number" name="education_year[]" class="form-control form-control-sm"></td>
+        <td><input type="number" step="0.01" name="education_percentage[]" class="form-control form-control-sm"></td>
+        <td><input type="text" name="education_specialization[]" class="form-control form-control-sm"></td>
+    `;
+    tbody.appendChild(newRow);
+}
+
+function addPromotionRow() {
+    const tbody = document.getElementById('promotion-rows');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td><input type="date" name="promo_date[]" class="form-control form-control-sm"></td>
+        <td>
+            <select name="promo_type[]" class="form-select form-select-sm">
+                <option value="internal">Internal</option>
+                <option value="external">External</option>
+                <option value="lateral">Lateral</option>
+            </select>
+        </td>
+        <td><input type="text" name="promo_from_level[]" class="form-control form-control-sm"></td>
+        <td><input type="text" name="promo_to_level[]" class="form-control form-control-sm"></td>
+        <td><input type="number" name="promo_unpaid_leaves[]" class="form-control form-control-sm" value="0"></td>
+        <td><input type="text" name="promo_remarks[]" class="form-control form-control-sm"></td>
+    `;
+    tbody.appendChild(newRow);
+}
+
+document.getElementById('profile-pic-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const container = document.getElementById('profile-pic-container');
+            container.innerHTML = '<img id="profile-preview" src="' + event.target.result + '" alt="Profile" class="rounded border" style="max-width: 100%; max-height: 180px; object-fit: cover;">';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock content %}
+

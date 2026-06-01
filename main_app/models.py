@@ -84,6 +84,8 @@ class Book(models.Model):
     author = models.CharField(max_length=200)
     isbn = models.CharField(max_length=13)
     category = models.CharField(max_length=50)
+    quantity = models.PositiveIntegerField(default=1, help_text="Number of copies / accession count")
+    purchase_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return str(self.name) + " [" + str(self.isbn) + "]"
@@ -122,15 +124,126 @@ class IssuedBook(models.Model):
 
 
 class Staff(models.Model):
+    EMPLOYMENT_TYPE_CHOICES = [
+        ('full_time', 'Full Time'),
+        ('part_time', 'Part Time'),
+        ('contract', 'Contract'),
+    ]
+
     course = models.ForeignKey(
         Course, on_delete=models.DO_NOTHING, null=True, blank=False
     )
     admin = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     role = models.CharField(max_length=120, default="Teacher")
     role_detail = models.CharField(max_length=120, blank=True, default="")
+    division = models.CharField(max_length=120, blank=True, default="")
+    department = models.CharField(max_length=120, blank=True, default="")
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, blank=True, default='full_time')
+    duty_shift = models.CharField(max_length=50, blank=True, default="")
+    date_of_join = models.DateField(null=True, blank=True)
+    permanent_on = models.DateField(null=True, blank=True)
+    last_promotion_date = models.DateField(null=True, blank=True)
+    contact_number = models.CharField(max_length=20, blank=True, default="")
+    hr_extra_details = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return self.admin.first_name + " " + self.admin.last_name
+
+
+class EmployeeIdentificationDetails(models.Model):
+    BLOOD_GROUP_CHOICES = [
+        ('O+', 'O+'),
+        ('O-', 'O-'),
+        ('A+', 'A+'),
+        ('A-', 'A-'),
+        ('B+', 'B+'),
+        ('B-', 'B-'),
+        ('AB+', 'AB+'),
+        ('AB-', 'AB-'),
+    ]
+
+    staff = models.OneToOneField(Staff, on_delete=models.CASCADE, related_name='identification_details')
+    bank_name = models.CharField(max_length=200, blank=True, default="")
+    account_number = models.CharField(max_length=50, blank=True, default="")
+    citizenship_number = models.CharField(max_length=50, blank=True, default="")
+    citizenship_issue_date = models.DateField(null=True, blank=True)
+    citizenship_issue_place = models.CharField(max_length=200, blank=True, default="")
+    pf_number = models.CharField(max_length=50, blank=True, default="")
+    cit_number = models.CharField(max_length=50, blank=True, default="")
+    pan_number = models.CharField(max_length=50, blank=True, default="")
+    blood_group = models.CharField(max_length=10, choices=BLOOD_GROUP_CHOICES, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"ID Details - {self.staff}"
+
+
+class EmployeeEducationDetails(models.Model):
+    EDUCATION_LEVEL_CHOICES = [
+        ('slc', 'SLC'),
+        ('intermediate', 'Intermediate'),
+        ('bachelor', 'Bachelor'),
+        ('master', 'Master'),
+        ('phd', 'PhD'),
+    ]
+
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='education_details')
+    level = models.CharField(max_length=20, choices=EDUCATION_LEVEL_CHOICES)
+    title_of_qualification = models.CharField(max_length=200, blank=True, default="")
+    institution = models.CharField(max_length=300, blank=True, default="")
+    passed_year = models.IntegerField(null=True, blank=True)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    specialization = models.CharField(max_length=200, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-passed_year']
+
+    def __str__(self):
+        return f"{self.level} - {self.staff}"
+
+
+class EmployeePromotionHistory(models.Model):
+    PROMOTION_TYPE_CHOICES = [
+        ('internal', 'Internal'),
+        ('external', 'External'),
+        ('lateral', 'Lateral'),
+    ]
+
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='promotion_history')
+    date = models.DateField()
+    promotion_type = models.CharField(max_length=20, choices=PROMOTION_TYPE_CHOICES, blank=True, default='internal')
+    from_level = models.CharField(max_length=200, blank=True, default="")
+    to_level = models.CharField(max_length=200, blank=True, default="")
+    unpaid_leaves = models.IntegerField(default=0)
+    remarks = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"Promotion - {self.staff} - {self.date}"
+
+
+class EmployeeTransferHistory(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='transfer_history')
+    transfer_date = models.DateField()
+    from_department = models.CharField(max_length=200, blank=True, default="")
+    to_department = models.CharField(max_length=200, blank=True, default="")
+    transfer_type = models.CharField(max_length=100, blank=True, default="")
+    remarks = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-transfer_date']
+
+    def __str__(self):
+        return f"Transfer - {self.staff} - {self.transfer_date}"
 
 
 class Subject(models.Model):
@@ -147,12 +260,79 @@ class Subject(models.Model):
         return self.name
 
 
+class BiometricLog(models.Model):
+    """Records employee punch-in and punch-out times from biometric system"""
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='biometric_logs')
+    date = models.DateField(auto_now_add=False)
+    in_time = models.TimeField(null=True, blank=True)
+    out_time = models.TimeField(null=True, blank=True)
+    in_timestamp = models.DateTimeField(null=True, blank=True)
+    out_timestamp = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('staff', 'date')
+        ordering = ['-date', '-in_timestamp']
+
+    def __str__(self):
+        return f"{self.staff} - {self.date}"
+
+    @property
+    def worked_hours(self):
+        """Calculate worked hours from in_time and out_time"""
+        if self.in_time and self.out_time:
+            start = datetime.combine(datetime.today(), self.in_time)
+            end = datetime.combine(datetime.today(), self.out_time)
+            if end < start:  # Handle cross-midnight shifts
+                end = datetime.combine(datetime.today() + timedelta(days=1), self.out_time)
+            delta = end - start
+            hours = delta.total_seconds() / 3600
+            return round(hours, 2)
+        return None
+
+
 class Attendance(models.Model):
+    """Attendance record for student sessions"""
     session = models.ForeignKey(Session, on_delete=models.DO_NOTHING)
-    subject = models.ForeignKey(Subject, on_delete=models.DO_NOTHING)
+    subject = models.ForeignKey(Subject, on_delete=models.DO_NOTHING, null=True, blank=True)
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Attendance - {self.date} - {self.session}"
+
+
+class EmployeeAttendance(models.Model):
+    """Daily attendance record with status (Present/Absent/Late/Early Out) for employees"""
+    STATUS_CHOICES = [
+        ('present', 'Present'),
+        ('absent', 'Absent'),
+        ('late', 'Late'),
+        ('early_out', 'Early Out'),
+        ('half_day', 'Half Day'),
+        ('leave', 'Leave'),
+    ]
+
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='employee_attendance_records')
+    date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='absent')
+    in_time = models.TimeField(null=True, blank=True)
+    out_time = models.TimeField(null=True, blank=True)
+    worked_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    late_by_minutes = models.IntegerField(default=0)  # Minutes late
+    early_out_by_minutes = models.IntegerField(default=0)  # Minutes early out
+    remarks = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('staff', 'date')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.staff} - {self.date} - {self.status}"
 
 
 class AttendanceReport(models.Model):
@@ -271,13 +451,20 @@ class Exam(models.Model):
 
 
 class InventoryItem(models.Model):
+    ITEM_TYPE_CHOICES = [
+        ('consumable', 'Consumable'),
+        ('fixed', 'Fixed Asset'),
+        ('general', 'General'),
+    ]
     name = models.CharField(max_length=160)
     category = models.CharField(max_length=80, default="General")
+    item_type = models.CharField(max_length=20, choices=ITEM_TYPE_CHOICES, default='general')
     quantity = models.PositiveIntegerField(default=0)
     unit = models.CharField(max_length=20, default="pcs")
     location = models.CharField(max_length=120, blank=True)
     reorder_level = models.PositiveIntegerField(default=5)
     last_updated = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["name"]
@@ -288,6 +475,76 @@ class InventoryItem(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ConsumableItem(models.Model):
+    """Consumable items (used up and need to be replenished)"""
+    name = models.CharField(max_length=160)
+    category = models.CharField(max_length=80, default="General")
+    quantity = models.PositiveIntegerField(default=0)
+    unit = models.CharField(max_length=20, default="pcs")
+    location = models.CharField(max_length=120, blank=True)
+    reorder_level = models.PositiveIntegerField(default=5)
+    supplier_name = models.CharField(max_length=160, blank=True)
+    cost_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    @property
+    def is_low_stock(self):
+        return self.quantity <= self.reorder_level
+
+    @property
+    def total_cost(self):
+        return self.quantity * self.cost_per_unit
+
+    def __str__(self):
+        return f"{self.name} ({self.category})"
+
+
+class FixedItem(models.Model):
+    """Fixed assets (long-term items that don't get consumed)"""
+    CONDITION_CHOICES = [
+        ('new', 'New'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor'),
+        ('damaged', 'Damaged'),
+    ]
+    name = models.CharField(max_length=160)
+    category = models.CharField(max_length=80, default="General")
+    quantity = models.PositiveIntegerField(default=1)
+    location = models.CharField(max_length=120, blank=True)
+    serial_number = models.CharField(max_length=100, blank=True, unique=True)
+    purchase_date = models.DateField(null=True, blank=True)
+    purchase_cost = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    depreciation_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Percentage per year")
+    condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='new')
+    warranty_expiry = models.DateField(null=True, blank=True)
+    last_maintenance_date = models.DateField(null=True, blank=True)
+    next_maintenance_date = models.DateField(null=True, blank=True)
+    remarks = models.TextField(blank=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    @property
+    def current_value(self):
+        """Calculate current value based on depreciation"""
+        if not self.purchase_date:
+            return self.purchase_cost
+        from datetime import datetime
+        years_owned = (datetime.now().date() - self.purchase_date).days / 365.25
+        depreciation_factor = 1 - (self.depreciation_rate / 100) * years_owned
+        return self.purchase_cost * max(depreciation_factor, 0)
+
+    def __str__(self):
+        return f"{self.name} ({self.category})"
 
 
 class Payslip(models.Model):
@@ -449,6 +706,19 @@ class StoreRequisition(models.Model):
         null=True,
         blank=True,
         related_name="decided_requisitions",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class Clearance(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    reason = models.TextField()
+    status = models.SmallIntegerField(
+        choices=APPROVAL_STATUS_CHOICES, default=STATUS_PENDING
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -625,6 +895,29 @@ def save_user_profile(sender, instance, **kwargs):
     if user_type == "3":
         profile, _ = Student.objects.get_or_create(admin=instance)
         profile.save()
+
+
+# ---------- Library: Clearance ----------
+
+
+class ClearanceRequest(models.Model):
+    STATUS_CHOICES = (
+        (0, "Pending"),
+        (1, "Approved"),
+        (-1, "Rejected"),
+    )
+    student = models.ForeignKey(
+        "CustomUser", on_delete=models.CASCADE, related_name="clearance_requests"
+    )
+    requested_on = models.DateTimeField(auto_now_add=True)
+    status = models.SmallIntegerField(default=0, choices=STATUS_CHOICES)
+    remarks = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ["-requested_on"]
+
+    def __str__(self):
+        return f"Clearance: {self.student.email} — {self.get_status_display()}"
 
 
 # todos

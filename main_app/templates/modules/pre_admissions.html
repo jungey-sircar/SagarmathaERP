@@ -4,36 +4,28 @@
 {% block breadcrumb %}<li class="breadcrumb-item active">Pre Admissions</li>{% endblock breadcrumb %}
 
 {% block content %}
-<div class="row g-3 mb-3">
-    <div class="col-lg-3 col-md-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-uppercase small fw-semibold text-muted">Total Inquiries</div>
-                <h2 class="mb-0 mt-2" data-testid="pre-admissions-total">{{ inquiries|length }}</h2>
+<div class="mb-4">
+    <h3 class="fw-bold mb-4">Pre Admission Module</h3>
+    <div class="row g-3">
+        {% for stat in admission_stats %}
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold mb-2">{{ stat.year }}</div>
+                    <h2 class="mb-3">{{ stat.count }} <span class="text-muted" style="font-size: 0.5em;">applicants</span></h2>
+                    <a href="{% url 'entrance_results_by_year' stat.year %}" class="text-primary text-decoration-none small fw-semibold">Entrance Result - {{ stat.year }}</a>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-uppercase small fw-semibold text-muted">Pending</div>
-                <h2 class="mb-0 mt-2 text-warning" data-testid="pre-admissions-pending">{{ pending_count }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-uppercase small fw-semibold text-muted">Approved</div>
-                <h2 class="mb-0 mt-2 text-success" data-testid="pre-admissions-approved">{{ approved_count }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-uppercase small fw-semibold text-muted">Rejected</div>
-                <h2 class="mb-0 mt-2 text-danger" data-testid="pre-admissions-rejected">{{ rejected_count }}</h2>
+        {% endfor %}
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold mb-2">IOE RESULTS LOG</div>
+                    <h2 class="mb-3">{{ ioe_results_log_count }} <span class="text-muted" style="font-size: 0.5em;">distinct entries</span></h2>
+                    <a href="{% url 'ioe_results_log' %}" class="text-primary text-decoration-none small fw-semibold">View Log</a>
+                </div>
             </div>
         </div>
     </div>

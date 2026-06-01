@@ -169,13 +169,44 @@ def admin_home(request):
         "holiday_rows": holiday_data["holiday_rows"],
         "optional_holiday_rows": holiday_data["optional_holiday_rows"],
         "holiday_period_label": holiday_data["holiday_period_label"],
+        "kaaj_request_count": KaajRequest.objects.filter(status=0).count(),
+        "optional_holiday_request_count": OptionalHolidayRequest.objects.filter(
+            status=0
+        ).count(),
         "class_routine": class_routine,
-        "clearance_request_count": scoped_leave_count,
+        "clearance_request_count": Clearance.objects.filter(status=0).count(),
         "leave_balance_count": LeaveReportStudent.objects.filter(status=1).count(),
         "pending_leave_count": scoped_leave_count,
         "pending_leave_title": "Pending Staff Leave Requests",
     }
     return render(request, "hod_template/home_content.html", context)
+
+
+def hod_view_clearance(request):
+    clearance_requests = Clearance.objects.all()
+    return render(
+        request,
+        "hod_template/clearance_request_view.html",
+        {"clearance_requests": clearance_requests},
+    )
+
+
+def hod_view_optional_holiday_requests(request):
+    optional_holiday_requests = OptionalHolidayRequest.objects.filter(status=0)
+    return render(
+        request,
+        "hod_template/optional_holiday_request_view.html",
+        {"optional_holiday_requests": optional_holiday_requests},
+    )
+
+
+def hod_view_kaaj_requests(request):
+    kaaj_requests = KaajRequest.objects.filter(status=0)
+    return render(
+        request,
+        "hod_template/kaaj_request_view.html",
+        {"kaaj_requests": kaaj_requests},
+    )
 
 
 def add_staff(request):

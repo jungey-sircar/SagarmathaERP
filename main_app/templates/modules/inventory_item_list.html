@@ -1,0 +1,519 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{ page_title }}{% if list_subtitle %} <span style="color:#e74c3c; font-weight:600;">{{ list_subtitle }}</span>{% endif %}{% endblock page_title %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'inventory' %}">Inventory</a></li>
+<li class="breadcrumb-item active">{{ page_title }}{% if list_subtitle %} {{ list_subtitle }}{% endif %}</li>
+{% endblock breadcrumb %}
+
+{% block custom_css %}
+<style>
+    /* ── Inventory List Page Styles ── */
+    .inv-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .inv-list-header .title-area h4 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.15rem;
+        color: #333;
+    }
+    .inv-list-header .title-area h4 .subtitle {
+        color: #e74c3c;
+        font-weight: 600;
+    }
+    .inv-list-header .action-btns {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .btn-add-new {
+        background: #17a2b8;
+        color: #fff;
+        border: none;
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .btn-add-new:hover { background: #138496; color: #fff; }
+    .btn-back-main {
+        background: #343a40;
+        color: #fff;
+        border: none;
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .btn-back-main:hover { background: #23272b; color: #fff; }
+
+    /* Pagination */
+    .inv-pagination {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 1rem;
+    }
+    .inv-pagination .page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #17a2b8;
+        background: transparent;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .inv-pagination .page-btn:hover {
+        background: #e0f7fa;
+        color: #0097a7;
+    }
+    .inv-pagination .page-btn.active {
+        background: #17a2b8;
+        color: #fff;
+    }
+    .inv-pagination .page-ellipsis {
+        width: 32px;
+        text-align: center;
+        color: #999;
+        font-size: 0.85rem;
+    }
+    .inv-pagination .total-pages {
+        margin-left: 0.5rem;
+        font-size: 0.85rem;
+        color: #888;
+        font-weight: 500;
+    }
+
+    /* Search bar */
+    .inv-search-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+    }
+    .inv-search-row .search-box {
+        display: flex;
+        align-items: stretch;
+        max-width: 400px;
+        width: 100%;
+    }
+    .inv-search-row .search-box input {
+        border: 1px solid #ddd;
+        border-right: none;
+        border-radius: 4px 0 0 4px;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.9rem;
+        flex: 1;
+        outline: none;
+    }
+    .inv-search-row .search-box input:focus {
+        border-color: #17a2b8;
+    }
+    .inv-search-row .search-box button {
+        background: #17a2b8;
+        color: #fff;
+        border: 1px solid #17a2b8;
+        border-radius: 0 4px 4px 0;
+        padding: 0.4rem 0.75rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .inv-search-row .search-box button:hover {
+        background: #138496;
+    }
+
+    /* Table */
+    .inv-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    .inv-table thead th {
+        background: #1f3a68 !important;
+        color: #fff !important;
+        padding: 0.65rem 0.75rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: none;
+        white-space: nowrap;
+    }
+    .inv-table tbody tr {
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .inv-table tbody tr:hover {
+        background: #fafbfc;
+    }
+    .inv-table tbody td {
+        padding: 0.6rem 0.75rem;
+        vertical-align: top;
+        color: #333;
+    }
+    .inv-table tbody td .item-name {
+        font-weight: 500;
+        color: #222;
+        margin-bottom: 0.25rem;
+    }
+    .inv-table tbody td .category-badge {
+        display: inline-block;
+        padding: 0.15rem 0.55rem;
+        border-radius: 3px;
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: #fff;
+        background: #e74c3c;
+        white-space: nowrap;
+    }
+    /* Rotating category badge colors */
+    .category-badge.cat-0 { background: #e74c3c; }
+    .category-badge.cat-1 { background: #17a2b8; }
+    .category-badge.cat-2 { background: #28a745; }
+    .category-badge.cat-3 { background: #fd7e14; }
+    .category-badge.cat-4 { background: #6f42c1; }
+    .category-badge.cat-5 { background: #e83e8c; }
+    .category-badge.cat-6 { background: #20c997; }
+    .category-badge.cat-7 { background: #6c757d; }
+
+    /* Action buttons */
+    .btn-edit-item {
+        background: #17a2b8;
+        color: #fff;
+        border: none;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        text-decoration: none;
+    }
+    .btn-edit-item:hover { background: #138496; color: #fff; }
+    .btn-delete-item {
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .btn-delete-item:hover { background: #c0392b; color: #fff; }
+    .action-cell {
+        display: flex;
+        gap: 0.35rem;
+        align-items: center;
+        white-space: nowrap;
+    }
+
+    /* Empty state */
+    .inv-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #999;
+        font-size: 1rem;
+    }
+
+    /* Delete confirmation modal */
+    .delete-confirm-modal .modal-header {
+        background: #e74c3c;
+        color: #fff;
+    }
+    .delete-confirm-modal .modal-header .btn-close {
+        filter: invert(1);
+    }
+    .delete-confirm-modal .modal-body {
+        padding: 1.5rem;
+        font-size: 1rem;
+    }
+    .delete-confirm-modal .modal-body .item-name-display {
+        font-weight: 600;
+        color: #e74c3c;
+    }
+    .delete-confirm-modal .btn-confirm-delete {
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        padding: 0.4rem 1.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    .delete-confirm-modal .btn-confirm-delete:hover {
+        background: #c0392b;
+        color: #fff;
+    }
+
+    /* Dark mode support */
+    .dark-mode .inv-list-header .title-area h4 { color: #e0e0e0; }
+    .dark-mode .inv-table tbody td { color: #d0d0d0; }
+    .dark-mode .inv-table tbody td .item-name { color: #e8e8e8; }
+    .dark-mode .inv-table tbody tr:hover { background: #2d2d2d; }
+    .dark-mode .inv-table tbody tr { border-bottom-color: #404040; }
+    .dark-mode .inv-search-row .search-box input {
+        background: #2d2d2d;
+        border-color: #555;
+        color: #e0e0e0;
+    }
+    .dark-mode .inv-pagination .page-btn { color: #4dd0e1; }
+    .dark-mode .inv-pagination .page-btn:hover { background: #263238; }
+    .dark-mode .inv-pagination .page-btn.active { background: #00838f; color: #fff; }
+</style>
+{% endblock custom_css %}
+
+{% block content %}
+<!-- Header Row: Title + Action Buttons -->
+<div class="inv-list-header">
+    <div class="title-area">
+        <h4>
+            {{ page_title }}
+            {% if list_subtitle %}<span class="subtitle">{{ list_subtitle }}</span>{% endif %}
+        </h4>
+    </div>
+    <div class="action-btns">
+        <button class="btn-add-new" data-bs-toggle="modal" data-bs-target="#addItemModal">
+            <i class="fas fa-plus"></i> Add New
+        </button>
+        <a href="{% url 'inventory' %}" class="btn-back-main">
+            <i class="fas fa-arrow-left"></i> Back to Main Stores
+        </a>
+    </div>
+</div>
+
+<!-- Pagination Row -->
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="inv-pagination">
+    {% for p in page_obj.paginator.page_range %}
+        {% if p == page_obj.number %}
+            <span class="page-btn active">{{ p }}</span>
+        {% elif p <= 9 or p == page_obj.paginator.num_pages %}
+            <a class="page-btn" href="?page={{ p }}{% if search_q %}&q={{ search_q }}{% endif %}">{{ p }}</a>
+        {% elif p == 10 %}
+            <span class="page-ellipsis">…</span>
+        {% endif %}
+    {% endfor %}
+    <span class="total-pages">{{ page_obj.paginator.num_pages }}</span>
+</div>
+{% endif %}
+
+<!-- Search Row -->
+<div class="inv-search-row">
+    <form method="get" class="search-box">
+        <input type="text" name="q" value="{{ search_q }}" placeholder="Search items...">
+        <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+</div>
+
+<!-- Items Table -->
+<div class="table-responsive">
+    <table class="inv-table">
+        <thead>
+            <tr>
+                <th style="width:60px;">S.N</th>
+                <th>Name</th>
+                <th style="width:80px;">Unit</th>
+                <th style="width:80px;">LPNo</th>
+                <th style="width:120px;">Location</th>
+                {% if show_reorder_level %}
+                <th style="width:110px;">ReOrder Level</th>
+                {% endif %}
+                <th style="width:160px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                <td>
+                    <div class="item-name">{{ item.name }}</div>
+                    <span class="category-badge cat-{{ forloop.counter0|divisibleby:8 }}{% with idx=forloop.counter0 %}{% widthratio idx 1 1 as rem %}{% endwith %}">{{ item.category }}</span>
+                </td>
+                <td>{{ item.unit|default:"PCS" }}</td>
+                <td></td>
+                <td>{{ item.location|default:"" }}</td>
+                {% if show_reorder_level %}
+                <td>{{ item.reorder_level|default:"" }}</td>
+                {% endif %}
+                <td>
+                    <div class="action-cell">
+                        <a href="{% url 'inventory_edit_item' item_type item.id %}" class="btn-edit-item">
+                            <i class="fas fa-pen"></i> Edit
+                        </a>
+                        <button type="button" class="btn-delete-item"
+                                onclick="showDeleteConfirm({{ item.id }}, '{{ item.name|escapejs }}')">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="{% if show_reorder_level %}7{% else %}6{% endif %}">
+                    <div class="inv-empty">
+                        <i class="fas fa-box-open" style="font-size:2rem; margin-bottom:0.5rem; display:block; opacity:0.4;"></i>
+                        No items found. Click <strong>+ Add New</strong> to add one.
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Bottom Pagination -->
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="inv-pagination mt-3">
+    {% if page_obj.has_previous %}
+    <a class="page-btn" href="?page={{ page_obj.previous_page_number }}{% if search_q %}&q={{ search_q }}{% endif %}">
+        <i class="fas fa-chevron-left"></i>
+    </a>
+    {% endif %}
+    <span style="font-size:0.85rem; color:#666; margin: 0 0.5rem;">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ total_count }} items)
+    </span>
+    {% if page_obj.has_next %}
+    <a class="page-btn" href="?page={{ page_obj.next_page_number }}{% if search_q %}&q={{ search_q }}{% endif %}">
+        <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade delete-confirm-modal" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <span class="item-name-display" id="deleteItemName"></span>?</p>
+                <p class="text-muted mb-0" style="font-size:0.85rem;">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" id="deleteForm" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="id" id="deleteItemId">
+                    <input type="hidden" name="item_type" value="{{ item_type }}">
+                    <button type="submit" name="action" value="delete" class="btn-confirm-delete">
+                        <i class="fas fa-trash-alt me-1"></i> Yes, Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1f3a68; color:#fff;">
+                <h5 class="modal-title">Add New Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                <input type="hidden" name="item_type" value="{{ item_type }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Category</label>
+                        <input type="text" class="form-control" name="category" value="General">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Quantity</label>
+                            <input type="number" class="form-control" name="quantity" value="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Unit</label>
+                            <select class="form-select" name="unit">
+                                <option value="PCS">PCS</option>
+                                <option value="SET">SET</option>
+                                <option value="LTR">LTR</option>
+                                <option value="KG">KG</option>
+                                <option value="MTR">MTR</option>
+                                <option value="Lot">Lot</option>
+                                <option value="Box">Box</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Location</label>
+                        <input type="text" class="form-control" name="location">
+                    </div>
+                    {% if show_reorder_level %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Reorder Level</label>
+                        <input type="number" class="form-control" name="reorder_level" value="5">
+                    </div>
+                    {% endif %}
+                    {% if item_type == "fixed" %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Serial Number</label>
+                        <input type="text" class="form-control" name="serial_number">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Condition</label>
+                        <select class="form-select" name="condition">
+                            <option value="new">New</option>
+                            <option value="good">Good</option>
+                            <option value="fair">Fair</option>
+                            <option value="poor">Poor</option>
+                            <option value="damaged">Damaged</option>
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block custom_js %}
+<script>
+function showDeleteConfirm(itemId, itemName) {
+    document.getElementById('deleteItemId').value = itemId;
+    document.getElementById('deleteItemName').textContent = itemName;
+    var modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    modal.show();
+}
+</script>
+{% endblock custom_js %}

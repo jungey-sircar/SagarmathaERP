@@ -1,9 +1,10 @@
 from django.urls import path, include
 from rest_framework import routers
-from .views import HODDashboardAPIView
+from .views import HODDashboardAPIView, InventoryDashboardAPIView
 from .viewsets import (
     CourseViewSet, StaffViewSet, SubjectViewSet, StudentViewSet, AttendanceViewSet,
-    AttendanceReportViewSet, LeaveReportStaffViewSet, BookViewSet, SessionViewSet, StudentResultViewSet
+    AttendanceReportViewSet, LeaveReportStaffViewSet, BookViewSet, SessionViewSet,
+    StudentResultViewSet, InventoryItemViewSet, ConsumableItemViewSet, FixedItemViewSet
 )
 
 try:
@@ -23,9 +24,13 @@ router.register(r'leave-staff', LeaveReportStaffViewSet)
 router.register(r'books', BookViewSet)
 router.register(r'sessions', SessionViewSet)
 router.register(r'results', StudentResultViewSet)
+router.register(r'inventory-items', InventoryItemViewSet)
+router.register(r'consumable-items', ConsumableItemViewSet)
+router.register(r'fixed-items', FixedItemViewSet)
 
 urlpatterns = [
     path('hod/dashboard/', HODDashboardAPIView.as_view(), name='api_hod_dashboard'),
+    path('inventory/dashboard/', InventoryDashboardAPIView.as_view(), name='api_inventory_dashboard'),
     path('', include(router.urls)),
 ]
 

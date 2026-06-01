@@ -181,9 +181,7 @@ def staff_home(request):
             "total_students": department_students.count(),
             "total_staff": department_staff.count(),
             "total_subject": department_subjects.count(),
-            "total_attendance": Attendance.objects.filter(
-                subject__in=department_subjects
-            ).count(),
+            "total_attendance": Attendance.objects.count(),
             "total_leave": total_leave,
             "subject_list": subject_list,
             "attendance_list": attendance_list,

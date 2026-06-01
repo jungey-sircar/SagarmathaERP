@@ -1,0 +1,87 @@
+{% extends 'main_app/erpnext_base.html' %}
+{% load static %}
+
+{% block page_title %}Kaaj/Tour Requests{% endblock page_title %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Tour/Kaaj Requests Waiting for Approval</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    {% if kaaj_requests %}
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Pending Kaaj/Tour Requests</h3>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Staff</th>
+                                            <th>Purpose</th>
+                                            <th>Destination</th>
+                                            <th>From</th>
+                                            <th>To</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for request in kaaj_requests %}
+                                        <tr>
+                                            <td>{{ request.staff }}</td>
+                                            <td>{{ request.purpose }}</td>
+                                            <td>{{ request.destination }}</td>
+                                            <td>{{ request.from_date }}</td>
+                                            <td>{{ request.to_date }}</td>
+                                            <td>
+                                                {% if request.status == 0 %}
+                                                <span class="badge badge-warning">Pending</span>
+                                                {% elif request.status == 1 %}
+                                                <span class="badge badge-success">Approved</span>
+                                                {% else %}
+                                                <span class="badge badge-danger">Rejected</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if request.status == 0 %}
+                                                <a href="#" class="btn btn-sm btn-success">Approve</a>
+                                                <a href="#" class="btn btn-sm btn-danger">Reject</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
+                            <div style="color: #6c757d; text-transform: uppercase; font-size: 12px; font-weight: 600; margin-bottom: 15px; letter-spacing: 0.5px;">
+                                Tour/Kaaj waiting for your approval
+                            </div>
+                            <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; padding: 15px; margin-bottom: 15px; color: #721c24;">
+                                No Tour/Kaaj requests waiting for your approval.
+                            </div>
+                            <a href="#" class="btn btn-outline-primary" style="border: 1px solid #0066cc; color: #0066cc; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: 600;">
+                                View my past Tour/Kaaj approvals
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

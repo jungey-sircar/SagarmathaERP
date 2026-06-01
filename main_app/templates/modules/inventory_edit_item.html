@@ -1,0 +1,244 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{ page_title }}{% endblock page_title %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'inventory' %}">Inventory</a></li>
+<li class="breadcrumb-item"><a href="{{ list_url }}">List of Items</a></li>
+<li class="breadcrumb-item active">Edit Item</li>
+{% endblock breadcrumb %}
+
+{% block custom_css %}
+<style>
+    .edit-form-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+    .edit-form-header .form-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    .edit-form-header .type-badge {
+        display: inline-block;
+        padding: 0.3rem 0.85rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #fff;
+        background: #e74c3c;
+    }
+    .edit-form-header .back-link {
+        font-size: 0.9rem;
+        color: #17a2b8;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .edit-form-header .back-link:hover {
+        text-decoration: underline;
+    }
+
+    .item-edit-form {
+        max-width: 800px;
+    }
+    .item-edit-form .form-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #444;
+        margin-bottom: 0.3rem;
+    }
+    .item-edit-form .form-label .required {
+        color: #e74c3c;
+    }
+    .item-edit-form .form-control,
+    .item-edit-form .form-select {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    .item-edit-form .form-control:focus,
+    .item-edit-form .form-select:focus {
+        border-color: #17a2b8;
+        box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.15);
+    }
+    .item-edit-form hr {
+        border-top: 1px solid #eee;
+        margin: 1.5rem 0;
+    }
+    .btn-save-item {
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        padding: 0.5rem 2rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .btn-save-item:hover {
+        background: #1d4ed8;
+        color: #fff;
+    }
+
+    /* Dark mode */
+    .dark-mode .edit-form-header .form-title { color: #e0e0e0; }
+    .dark-mode .item-edit-form .form-label { color: #ccc; }
+    .dark-mode .item-edit-form .form-control,
+    .dark-mode .item-edit-form .form-select {
+        background: #2d2d2d;
+        border-color: #555;
+        color: #e0e0e0;
+    }
+    .dark-mode .item-edit-form hr { border-top-color: #444; }
+</style>
+{% endblock custom_css %}
+
+{% block content %}
+
+<!-- Header: Item Entry Form : [Type Badge] Back to List -->
+<div class="edit-form-header">
+    <span class="form-title">Item Entry Form :</span>
+    {% if type_label %}
+    <span class="type-badge">{{ type_label }}</span>
+    {% endif %}
+    <a href="{{ list_url }}" class="back-link">Back to List</a>
+</div>
+
+<form method="post" class="item-edit-form">
+    {% csrf_token %}
+
+    <!-- Name -->
+    <div class="mb-3">
+        <label class="form-label">Name <span class="required">*</span></label>
+        <input type="text" class="form-control" name="name" value="{{ item.name }}" required style="max-width:500px;">
+    </div>
+
+    <!-- Generic Name (same as name for our model) -->
+    <div class="mb-3">
+        <label class="form-label">Generic Name</label>
+        <input type="text" class="form-control" name="generic_name" value="{{ item.name }}" style="max-width:500px;">
+    </div>
+
+    <!-- Specification -->
+    <div class="mb-3">
+        <label class="form-label">Specification</label>
+        <input type="text" class="form-control" name="specification" value="" style="max-width:100%;">
+    </div>
+
+    <hr>
+
+    <!-- Main Store / Type -->
+    <div class="mb-3">
+        <label class="form-label">Main Store <span class="required">*</span></label>
+        <select class="form-select" name="item_type_display" style="max-width:280px;">
+            <option value="general" {% if item_type == "general" %}selected{% endif %}>General Items</option>
+            <option value="consumable" {% if item_type == "consumable" %}selected{% endif %}>Consumable Goods</option>
+            <option value="fixed" {% if item_type == "fixed" %}selected{% endif %}>Fixed Assets</option>
+        </select>
+    </div>
+
+    <!-- Group / Category -->
+    <div class="mb-3">
+        <label class="form-label">Group <span class="required">*</span></label>
+        <input type="text" class="form-control" name="category" value="{{ item.category }}" style="max-width:280px;">
+    </div>
+
+    <!-- Unit -->
+    <div class="mb-3">
+        <label class="form-label">Unit <span class="required">*</span></label>
+        <select class="form-select" name="unit" style="max-width:280px;">
+            {% with current_unit=item.unit|default:"PCS" %}
+            <option value="PCS" {% if current_unit == "PCS" %}selected{% endif %}>PCS</option>
+            <option value="SET" {% if current_unit == "SET" %}selected{% endif %}>SET</option>
+            <option value="LTR" {% if current_unit == "LTR" %}selected{% endif %}>LTR</option>
+            <option value="KG" {% if current_unit == "KG" %}selected{% endif %}>KG</option>
+            <option value="MTR" {% if current_unit == "MTR" %}selected{% endif %}>MTR</option>
+            <option value="Lot" {% if current_unit == "Lot" %}selected{% endif %}>Lot</option>
+            <option value="Box" {% if current_unit == "Box" %}selected{% endif %}>Box</option>
+            <option value="Pair" {% if current_unit == "Pair" %}selected{% endif %}>Pair</option>
+            <option value="Ream" {% if current_unit == "Ream" %}selected{% endif %}>Ream</option>
+            <option value="Bundle" {% if current_unit == "Bundle" %}selected{% endif %}>Bundle</option>
+            {% endwith %}
+        </select>
+    </div>
+
+    <!-- Quantity -->
+    <div class="mb-3">
+        <label class="form-label">Quantity</label>
+        <input type="number" class="form-control" name="quantity" value="{{ item.quantity }}" style="max-width:280px;">
+    </div>
+
+    <!-- LF No. -->
+    <div class="mb-3">
+        <label class="form-label">LF No.</label>
+        <input type="text" class="form-control" name="lp_no" value="" style="max-width:280px;">
+    </div>
+
+    <!-- Location -->
+    <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input type="text" class="form-control" name="location" value="{{ item.location|default:'' }}" style="max-width:280px;">
+    </div>
+
+    <!-- Reorder Level -->
+    {% if item_type != "fixed" %}
+    <div class="mb-3">
+        <label class="form-label">Reorder Level</label>
+        <input type="number" class="form-control" name="reorder_level" value="{{ item.reorder_level|default:'' }}" style="max-width:280px;">
+    </div>
+    {% endif %}
+
+    <hr>
+
+    <!-- Type-specific fields -->
+    {% if item_type == "consumable" %}
+    <div class="mb-3">
+        <label class="form-label">Supplier / Manufacturer</label>
+        <input type="text" class="form-control" name="supplier_name" value="{{ item.supplier_name|default:'' }}" style="max-width:100%;">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Cost Per Unit</label>
+        <input type="number" step="0.01" class="form-control" name="cost_per_unit" value="{{ item.cost_per_unit|default:0 }}" style="max-width:280px;">
+    </div>
+    {% endif %}
+
+    {% if item_type == "fixed" %}
+    <div class="mb-3">
+        <label class="form-label">Serial Number</label>
+        <input type="text" class="form-control" name="serial_number" value="{{ item.serial_number|default:'' }}" style="max-width:500px;">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Condition</label>
+        <select class="form-select" name="condition" style="max-width:280px;">
+            <option value="new" {% if item.condition == "new" %}selected{% endif %}>New</option>
+            <option value="good" {% if item.condition == "good" %}selected{% endif %}>Good</option>
+            <option value="fair" {% if item.condition == "fair" %}selected{% endif %}>Fair</option>
+            <option value="poor" {% if item.condition == "poor" %}selected{% endif %}>Poor</option>
+            <option value="damaged" {% if item.condition == "damaged" %}selected{% endif %}>Damaged</option>
+        </select>
+    </div>
+    {% endif %}
+
+    <!-- Usage -->
+    <div class="mb-3">
+        <label class="form-label">Usage</label>
+        <input type="text" class="form-control" name="usage" value="" style="max-width:500px;">
+    </div>
+
+    <!-- Remarks -->
+    <div class="mb-3">
+        <label class="form-label">Remarks (if any)</label>
+        <input type="text" class="form-control" name="remarks" value="{% if item.remarks %}{{ item.remarks }}{% endif %}" style="max-width:500px;">
+    </div>
+
+    <!-- Save Button -->
+    <div class="mt-4 mb-4">
+        <button type="submit" class="btn-save-item">Save</button>
+    </div>
+</form>
+
+{% endblock content %}

@@ -1,0 +1,60 @@
+{% extends 'main_app/hod_template/base_template.html' %}
+{% block page_title %}
+Clearance Requests
+{% endblock page_title %}
+{% block main_content %}
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- general form elements -->
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Clearance Requests</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Reason</th>
+                                    <th>Date Submitted</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for clearance in clearance_requests %}
+                                <tr>
+                                    <td>{{ clearance.student }}</td>
+                                    <td>{{ clearance.reason }}</td>
+                                    <td>{{ clearance.created_at }}</td>
+                                    <td>
+                                        {% if clearance.status == 0 %}
+                                        <span class="badge badge-warning">Pending</span>
+                                        {% elif clearance.status == 1 %}
+                                        <span class="badge badge-success">Approved</span>
+                                        {% else %}
+                                        <span class="badge badge-danger">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if clearance.status == 0 %}
+                                        <a href="#" class="btn btn-success">Approve</a>
+                                        <a href="#" class="btn btn-danger">Reject</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /.content -->
+{% endblock main_content %}

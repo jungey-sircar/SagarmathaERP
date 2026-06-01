@@ -1,0 +1,32 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{ page_title }}{% endblock page_title %}
+{% block breadcrumb %}<li class="breadcrumb-item active">{{ page_title }}</li>{% endblock breadcrumb %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white"><h5 class="mb-0">{{ page_title }}</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead class="table-dark"><tr><th>#</th><th>Name</th><th>Email</th><th>Course</th><th>Session</th></tr></thead>
+                <tbody>
+                {% for s in students %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ s.admin.first_name }} {{ s.admin.last_name }}</td>
+                        <td>{{ s.admin.email }}</td>
+                        <td>{{ s.course.name|default:'-' }}</td>
+                        <td>{{ s.session.end_year|default:s.session.start_year }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted">No students found for this batch/program.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+

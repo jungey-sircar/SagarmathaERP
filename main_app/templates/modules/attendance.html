@@ -1,0 +1,242 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}Employees Attendance{% endblock page_title %}
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Attendance</li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Total Staff</h6>
+                    <h3 class="mb-0">{{ total_staff }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <h6 class="text-success mb-2">Present</h6>
+                    <h3 class="mb-0 text-success">{{ present_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm bg-danger bg-opacity-10">
+                <div class="card-body text-center">
+                    <h6 class="text-danger mb-2">Absent</h6>
+                    <h3 class="mb-0 text-danger">{{ absent_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <h6 class="text-warning mb-2">Other</h6>
+                    <h3 class="mb-0 text-warning">{{ early_out_count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Header -->
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Daily Log Sheet</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" onclick="printAttendance()" title="Print">
+                    <i class="fas fa-print"></i> Print
+                </button>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#syncModal">
+                    <i class="fas fa-sync"></i> Sync
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Filters -->
+            <form method="get" class="mb-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="date_filter" class="form-label">Date</label>
+                        <input type="date" id="date_filter" name="date" class="form-control" value="{{ date }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="status_filter" class="form-label">Status</label>
+                        <select name="status" id="status_filter" class="form-select">
+                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> View Result
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Attendance Table -->
+            <div class="table-responsive">
+                <table class="table table-sm align-middle table-hover mb-0" id="attendance-table">
+                    <thead class="table-dark sticky-top">
+                        <tr>
+                            <th style="width: 5%">S.N</th>
+                            <th style="width: 8%">Code</th>
+                            <th style="width: 15%">Name</th>
+                            <th>Department</th>
+                            <th style="width: 8%">Late In</th>
+                            <th style="width: 8%">InTime</th>
+                            <th style="width: 8%">OutTime</th>
+                            <th style="width: 8%">Early Out</th>
+                            <th style="width: 10%">Worked Hrs.</th>
+                            <th style="width: 10%">Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for record in attendance_records %}
+                        <tr data-record-id="{{ record.record_id }}">
+                            <td>{{ record.sn }}</td>
+                            <td><span class="badge bg-secondary">{{ record.code }}</span></td>
+                            <td class="fw-500">{{ record.name }}</td>
+                            <td>{{ record.department }}</td>
+                            <td>
+                                {% if record.late_in %}
+                                    <span class="badge bg-warning">{{ record.late_in }} min</span>
+                                {% else %}
+                                    <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ record.in_time }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ record.out_time }}</span>
+                            </td>
+                            <td>
+                                {% if record.early_out %}
+                                    <span class="badge bg-info">{{ record.early_out }} min</span>
+                                {% else %}
+                                    <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ record.worked_hours }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ record.status_class }}">
+                                    {{ record.status|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ record.remarks|truncatewords:5 }}</small>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="11" class="text-center text-muted py-4">
+                                No attendance records found for {{ date }}.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sync Modal -->
+<div class="modal fade" id="syncModal" tabindex="-1" aria-labelledby="syncModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="syncModalLabel">Sync Biometric Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'sync_biometric_data' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-muted mb-3">This will sync all biometric punch records and auto-generate attendance for the selected date.</p>
+                    <div class="mb-3">
+                        <label for="sync_date" class="form-label">Date to Sync</label>
+                        <input type="date" id="sync_date" name="sync_date" class="form-control" value="{{ date }}" required>
+                    </div>
+                    <div class="alert alert-info small" role="alert">
+                        <i class="fas fa-info-circle"></i>
+                        All staff without biometric entry will be marked as <strong>Absent</strong>.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sync"></i> Sync Data
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge-success { background-color: #28a745 !important; }
+    .badge-danger { background-color: #dc3545 !important; }
+    .badge-warning { background-color: #ffc107 !important; color: #000; }
+    .badge-info { background-color: #17a2b8 !important; }
+    .badge-secondary { background-color: #6c757d !important; }
+    .badge-light { background-color: #f8f9fa !important; color: #000; }
+
+    .fw-500 { font-weight: 500; }
+
+    .table-hover tbody tr {
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format date input
+    const dateInput = document.getElementById('date_filter');
+    if(dateInput.value) {
+        dateInput.value = dateInput.value.replace(/\//g, '-');
+    }
+});
+
+function printAttendance() {
+    window.print();
+}
+
+@media print {
+    .btn, .modal, .card-header .btn {
+        display: none !important;
+    }
+
+    .table-responsive {
+        overflow: visible;
+    }
+
+    body {
+        background-color: white;
+        padding: 0;
+    }
+
+    .card {
+        border: 1px solid #dee2e6;
+        page-break-inside: avoid;
+    }
+}
+</script>
+{% endblock content %}
+

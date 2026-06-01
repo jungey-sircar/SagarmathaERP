@@ -14,6 +14,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.db.models import Q
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -675,14 +676,25 @@ def _email_temp_password(user, temp_password):
         return False
 
 
+def _next_redirect_target(request, fallback_url_name):
+    next_url = request.POST.get("next") or request.GET.get("next")
+    if next_url and url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+    return reverse(fallback_url_name)
+
+
 def promote_admission_to_student(request, admission_id):
     if request.method != "POST":
-        return redirect(reverse("admissions"))
+        return redirect(_next_redirect_target(request, "admissions"))
     admission = get_object_or_404(Admission, id=admission_id)
     user, temp_password, err = _promote_admission(admission)
     if err:
         messages.error(request, f"Cannot promote: {err}")
-        return redirect(reverse("admissions"))
+        return redirect(_next_redirect_target(request, "admissions"))
 
     emailed = _email_temp_password(user, temp_password)
     if emailed:
@@ -698,17 +710,17 @@ def promote_admission_to_student(request, admission_id):
             f"Promoted {admission.candidate_name} to Student. "
             f"Email send failed; temp password: {temp_password}.",
         )
-    return redirect(reverse("admissions"))
+    return redirect(_next_redirect_target(request, "admissions"))
 
 
 def bulk_promote_admissions(request):
     """Promote every selected Admission (POST `ids` list) to Student."""
     if request.method != "POST":
-        return redirect(reverse("admissions"))
+        return redirect(_next_redirect_target(request, "admissions"))
     ids = request.POST.getlist("ids")
     if not ids:
         messages.warning(request, "No admissions selected.")
-        return redirect(reverse("admissions"))
+        return redirect(_next_redirect_target(request, "admissions"))
 
     promoted, skipped = [], []
     for admission_id in ids:
@@ -731,7 +743,7 @@ def bulk_promote_admissions(request):
         )
     if skipped:
         messages.warning(request, "Skipped: " + "; ".join(skipped))
-    return redirect(reverse("admissions"))
+    return redirect(_next_redirect_target(request, "admissions"))
 
 
 # ---------- First-login password change ----------

@@ -32,8 +32,7 @@
                     <tbody>
                     {% for b in books %}
                     <tr><td>{{ forloop.counter }}</td><td>{{ b.isbn }}</td><td>{{ b.name }}</td><td>{{ b.author }}</td><td>{{ b.category }}</td>
-                    <td><form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="action" value="delete_book"><input type="hidden" name="id" value="{{ b.id }}">
-                        <button type="submit" class="btn btn-sm btn-outline-danger" data-testid="btn-del-book-{{ b.id }}">Delete</button></form></td></tr>
+                    <td><button type="button" class="btn btn-sm btn-outline-danger" data-testid="btn-del-book-{{ b.id }}" onclick="showDeleteBookConfirm({{ b.id }}, '{{ b.name|escapejs }}')">Delete</button></td></tr>
                     {% empty %}<tr><td colspan="6" class="text-center text-muted">No books yet.</td></tr>{% endfor %}
                     </tbody>
                 </table>
@@ -100,4 +99,42 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteBookModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:1.5rem;">
+                <p style="font-size:1rem;">Are you sure you want to delete <strong id="deleteBookName" style="color:#e74c3c;"></strong>?</p>
+                <p class="text-muted mb-0" style="font-size:0.85rem;">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" id="deleteBookForm" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_book">
+                    <input type="hidden" name="id" id="deleteBookId">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i> Yes, Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
+
+{% block custom_js %}
+<script>
+function showDeleteBookConfirm(bookId, bookName) {
+    document.getElementById('deleteBookId').value = bookId;
+    document.getElementById('deleteBookName').textContent = bookName;
+    var modal = new bootstrap.Modal(document.getElementById('deleteBookModal'));
+    modal.show();
+}
+</script>
+{% endblock custom_js %}

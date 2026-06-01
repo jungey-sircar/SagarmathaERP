@@ -11,6 +11,9 @@ from ..models import (
     LeaveReportStaff,
     Book,
     AttendanceReport,
+    InventoryItem,
+    ConsumableItem,
+    FixedItem,
 )
 from ..holiday_service import get_nepali_holiday_dashboard_data
 
@@ -69,6 +72,67 @@ class HODDashboardAPIView(APIView):
             "holiday_period_label": holiday_data["holiday_period_label"],
             "class_routine": class_routine,
             "announcement": "",
+        }
+
+        return Response(data)
+
+
+class InventoryDashboardAPIView(APIView):
+    """API endpoint for inventory dashboard statistics"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        from django.db.models import Sum
+
+        # Get all items
+        all_items = InventoryItem.objects.all()
+        consumable_items = ConsumableItem.objects.all()
+        fixed_items = FixedItem.objects.all()
+
+        # Calculate quantities
+        total_inventory_qty = all_items.aggregate(total=Sum("quantity"))["total"] or 0
+        consumable_qty = consumable_items.aggregate(total=Sum("quantity"))["total"] or 0
+        fixed_qty = fixed_items.aggregate(total=Sum("quantity"))["total"] or 0
+
+        # Low stock items
+        low_stock_inventory = [i for i in all_items if i.is_low_stock]
+        low_stock_consumable = [i for i in consumable_items if i.is_low_stock]
+
+        # Calculate total costs for consumable items
+        total_consumable_cost = float(sum(item.total_cost for item in consumable_items))
+
+        # Calculate total value for fixed items
+        total_fixed_value = float(sum(item.current_value for item in fixed_items))
+
+        data = {
+            "page_title": "Inventory Dashboard",
+            "inventory_stats": {
+                "total_items_count": all_items.count(),
+                "total_items_qty": total_inventory_qty,
+                "low_stock_count": len(low_stock_inventory),
+                "healthy_stock_count": all_items.count() - len(low_stock_inventory),
+            },
+            "consumable_stats": {
+                "total_count": consumable_items.count(),
+                "total_qty": consumable_qty,
+                "total_cost": total_consumable_cost,
+                "low_stock_count": len(low_stock_consumable),
+            },
+            "fixed_stats": {
+                "total_count": fixed_items.count(),
+                "total_qty": fixed_qty,
+                "total_value": total_fixed_value,
+            },
+            "low_stock_items": [
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "category": item.category,
+                    "quantity": item.quantity,
+                    "reorder_level": item.reorder_level,
+                }
+                for item in low_stock_inventory[:5]  # Top 5
+            ],
         }
 
         return Response(data)

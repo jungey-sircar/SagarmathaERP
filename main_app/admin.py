@@ -120,3 +120,36 @@ class AnnouncementAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Announcement, AnnouncementAdmin)
+
+
+# Attendance and Biometric Models
+class BiometricLogAdmin(admin.ModelAdmin):
+    list_display = ("staff", "date", "in_time", "out_time", "worked_hours", "created_at")
+    list_filter = ("date", "staff__department", "created_at")
+    search_fields = ("staff__admin__first_name", "staff__admin__last_name", "staff__admin__email")
+    date_hierarchy = "date"
+    readonly_fields = ("created_at", "updated_at", "worked_hours")
+    fieldsets = (
+        ("Staff Information", {"fields": ("staff", "date")}),
+        ("Punch Times", {"fields": ("in_time", "out_time", "in_timestamp", "out_timestamp")}),
+        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+
+
+class EmployeeAttendanceAdmin(admin.ModelAdmin):
+    list_display = ("staff", "date", "status", "in_time", "out_time", "worked_hours", "late_by_minutes")
+    list_filter = ("status", "date", "staff__department")
+    search_fields = ("staff__admin__first_name", "staff__admin__last_name", "staff__admin__email")
+    date_hierarchy = "date"
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        ("Staff & Date", {"fields": ("staff", "date", "status")}),
+        ("Punch Times", {"fields": ("in_time", "out_time", "worked_hours")}),
+        ("Deviations", {"fields": ("late_by_minutes", "early_out_by_minutes")}),
+        ("Notes", {"fields": ("remarks",)}),
+        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+
+
+admin.site.register(BiometricLog, BiometricLogAdmin)
+admin.site.register(EmployeeAttendance, EmployeeAttendanceAdmin)

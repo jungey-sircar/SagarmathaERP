@@ -1,0 +1,168 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}Admissions{% endblock page_title %}
+{% block breadcrumb %}<li class="breadcrumb-item"><a href="{% url 'admissions' %}">Admissions</a></li><li class="breadcrumb-item active">Dashboard</li>{% endblock breadcrumb %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-uppercase small fw-semibold text-muted">STUDENTS</div>
+                        <h2 class="mb-0 mt-2">{{ total_students }}</h2>
+                        <div class="text-muted small">from the beginning.</div>
+                    </div>
+                    <div class="text-primary" style="font-size: 28px;">📊</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% for c in course_counts %}
+    <div class="col-lg-3 col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-uppercase small fw-semibold text-muted">{{ c.name }}</div>
+                        <h2 class="mb-0 mt-2">{{ c.count }}</h2>
+                        <div class="text-muted small">from the beginning.</div>
+                    </div>
+                    <div class="text-primary" style="font-size: 28px;">📚</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Charts row -->
+<div class="row g-3 mb-4">
+    <!-- Donut Chart -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white"><h6 class="mb-0">{{ latest_year }} Batch</h6></div>
+            <div class="card-body" style="min-height: 350px;">
+                {% if latest_year %}
+                <div style="position: relative; height: 280px; margin-bottom: 20px;">
+                    <canvas id="donutChart"></canvas>
+                </div>
+                <div class="text-center">
+                    <div class="text-muted small mt-2">{{ latest_year_programs }} Program</div>
+                    <h5 class="text-muted">{{ latest_year_total }} Total Students - {{ latest_year }}</h5>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No batch data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Line Chart -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white"><h6 class="mb-0">Batch/Program Wise Students</h6></div>
+            <div class="card-body" style="position: relative; height: 350px;">
+                {% if chart_labels %}
+                <canvas id="lineChart"></canvas>
+                {% else %}
+                <p class="text-muted text-center">No trend data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch/Program Table -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white">
+        <h6 class="mb-0">Batch/Program</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Batch/Program</th>
+                        <th style="width:140px">No. Of Students</th>
+                        <th style="width:100px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for r in batch_program_rows %}
+                    <tr>
+                        <td>{{ r.year }} / {{ r.course }}</td>
+                        <td>{{ r.count }}</td>
+                        <td><a class="btn btn-sm btn-outline-secondary" href="{% url 'admissions_list' r.year r.course_id %}">View List</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No data available.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// Donut Chart
+{% if donut_labels %}
+const donutCtx = document.getElementById('donutChart');
+if (donutCtx) {
+    new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ donut_labels|safe }},
+            datasets: [{
+                data: {{ donut_data|safe }},
+                backgroundColor: {{ donut_colors|safe }}
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+}
+{% endif %}
+
+// Line Chart
+{% if chart_labels %}
+const lineCtx = document.getElementById('lineChart');
+if (lineCtx) {
+    new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: {{ chart_datasets|safe }}
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+{% endif %}
+</script>
+
+{% endblock content %}
+

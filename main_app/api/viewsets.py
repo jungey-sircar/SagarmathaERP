@@ -3,9 +3,13 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import (
     CourseSerializer, StaffSerializer, SubjectSerializer, StudentSerializer,
     AttendanceSerializer, AttendanceReportSerializer, LeaveReportStaffSerializer,
-    BookSerializer, SessionSerializer, StudentResultSerializer
+    BookSerializer, SessionSerializer, StudentResultSerializer, InventoryItemSerializer,
+    ConsumableItemSerializer, FixedItemSerializer
 )
-from ..models import Course, Staff, Subject, Student, Attendance, AttendanceReport, LeaveReportStaff, Book, Session, StudentResult
+from ..models import (
+    Course, Staff, Subject, Student, Attendance, AttendanceReport, LeaveReportStaff,
+    Book, Session, StudentResult, InventoryItem, ConsumableItem, FixedItem
+)
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -66,3 +70,22 @@ class StudentResultViewSet(viewsets.ModelViewSet):
     queryset = StudentResult.objects.select_related('student', 'subject').all()
     serializer_class = StudentResultSerializer
     permission_classes = [IsAuthenticated]
+
+
+class InventoryItemViewSet(viewsets.ModelViewSet):
+    queryset = InventoryItem.objects.all()
+    serializer_class = InventoryItemSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class ConsumableItemViewSet(viewsets.ModelViewSet):
+    queryset = ConsumableItem.objects.all()
+    serializer_class = ConsumableItemSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class FixedItemViewSet(viewsets.ModelViewSet):
+    queryset = FixedItem.objects.all()
+    serializer_class = FixedItemSerializer
+    permission_classes = [IsAuthenticated]
+
