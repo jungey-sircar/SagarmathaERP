@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from .views import HODDashboardAPIView, InventoryDashboardAPIView
+from .views import HODDashboardAPIView, InventoryDashboardAPIView, BiometricPunchAPIView
 from .viewsets import (
     CourseViewSet, StaffViewSet, SubjectViewSet, StudentViewSet, AttendanceViewSet,
     AttendanceReportViewSet, LeaveReportStaffViewSet, BookViewSet, SessionViewSet,
@@ -31,6 +31,7 @@ router.register(r'fixed-items', FixedItemViewSet)
 urlpatterns = [
     path('hod/dashboard/', HODDashboardAPIView.as_view(), name='api_hod_dashboard'),
     path('inventory/dashboard/', InventoryDashboardAPIView.as_view(), name='api_inventory_dashboard'),
+    path('biometric/punch/', BiometricPunchAPIView.as_view(), name='api_biometric_punch'),
     path('', include(router.urls)),
 ]
 

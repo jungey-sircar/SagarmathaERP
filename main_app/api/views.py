@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from ..models import (
     Staff,
@@ -136,3 +136,131 @@ class InventoryDashboardAPIView(APIView):
         }
 
         return Response(data)
+
+
+class BiometricPunchAPIView(APIView):
+    """
+    Publicly accessible API endpoint for actual physical biometric devices at the college gates.
+    Handles automatic 'login' (Punch-IN) and 'logout' (Punch-OUT) in real-time.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        user_type = request.data.get('user_type')  # 'staff' or 'student'
+        identifier = request.data.get('identifier')  # email or ID/Code
+
+        if not user_type or not identifier:
+            return Response({
+                "status": "error",
+                "message": "Missing user_type or identifier (email or user ID)"
+            }, status=400)
+
+        from datetime import datetime
+        from ..models import Staff, Student, BiometricLog, EmployeeAttendance, StudentAttendance
+        from ..module_views import calculate_attendance_status
+
+        now = datetime.now()
+        current_date = now.date()
+        current_time = now.time()
+
+        try:
+            user = None
+            if user_type == "staff":
+                # Find staff by admin ID, email, or profile ID
+                if str(identifier).isdigit():
+                    user = Staff.objects.filter(admin_id=int(identifier)).first()
+                if not user:
+                    user = Staff.objects.filter(admin__email=identifier).first()
+                if not user:
+                    user = Staff.objects.filter(id=identifier).first()
+
+                if not user:
+                    return Response({"status": "error", "message": "Staff member not found"}, status=404)
+
+                # Create or update biometric log
+                log, created = BiometricLog.objects.get_or_create(
+                    staff=user,
+                    date=current_date,
+                    defaults={
+                        'in_time': current_time,
+                        'in_timestamp': now,
+                    }
+                )
+
+                punch_type = "IN"
+                if not created:
+                    log.out_time = current_time
+                    log.out_timestamp = now
+                    log.save()
+                    punch_type = "OUT"
+
+                # Automatically calculate daily attendance status in real-time
+                status_data = calculate_attendance_status(user, current_date, log)
+                EmployeeAttendance.objects.update_or_create(
+                    staff=user,
+                    date=current_date,
+                    defaults=status_data
+                )
+
+                name = f"{user.admin.first_name} {user.admin.last_name}"
+                role = "Staff"
+
+            elif user_type == "student":
+                # Find student by admin ID, email, or profile ID
+                if str(identifier).isdigit():
+                    user = Student.objects.filter(admin_id=int(identifier)).first()
+                if not user:
+                    user = Student.objects.filter(admin__email=identifier).first()
+                if not user:
+                    user = Student.objects.filter(id=identifier).first()
+
+                if not user:
+                    return Response({"status": "error", "message": "Student not found"}, status=404)
+
+                # Create or update biometric log
+                log, created = BiometricLog.objects.get_or_create(
+                    student=user,
+                    date=current_date,
+                    defaults={
+                        'in_time': current_time,
+                        'in_timestamp': now,
+                    }
+                )
+
+                punch_type = "IN"
+                if not created:
+                    log.out_time = current_time
+                    log.out_timestamp = now
+                    log.save()
+                    punch_type = "OUT"
+
+                # Automatically calculate daily attendance status in real-time
+                status_data = calculate_attendance_status(user, current_date, log)
+                StudentAttendance.objects.update_or_create(
+                    student=user,
+                    date=current_date,
+                    defaults=status_data
+                )
+
+                name = f"{user.admin.first_name} {user.admin.last_name}"
+                role = "Student"
+
+            else:
+                return Response({"status": "error", "message": "Invalid user_type"}, status=400)
+
+            formatted_time = current_time.strftime('%I:%M:%S %p')
+            return Response({
+                "status": "success",
+                "punch_type": punch_type,
+                "name": name,
+                "role": role,
+                "time": formatted_time,
+                "in_time": log.in_time.strftime('%I:%M %p') if log.in_time else '--',
+                "out_time": log.out_time.strftime('%I:%M %p') if log.out_time else '--',
+                "worked_hours": f"{log.worked_hours:.2f}" if log.worked_hours else '--',
+                "daily_status": status_data['status'].upper()
+            })
+
+        except Exception as e:
+            return Response({"status": "error", "message": str(e)}, status=500)
+

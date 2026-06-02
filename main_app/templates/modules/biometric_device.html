@@ -548,12 +548,12 @@
         
         // Simulate AJAX request
         setTimeout(() => {
-            // Trigger server post punch
+            // Trigger actual physical biometric API endpoint
             const formData = new FormData();
             formData.append('user_type', userType);
-            formData.append('user_id', userId);
+            formData.append('identifier', userId);
             
-            fetch("{% url 'biometric_device_punch' %}", {
+            fetch("{% url 'api_biometric_punch' %}", {
                 method: "POST",
                 body: formData,
                 headers: {
