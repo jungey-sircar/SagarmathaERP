@@ -124,16 +124,27 @@ admin.site.register(Announcement, AnnouncementAdmin)
 
 # Attendance and Biometric Models
 class BiometricLogAdmin(admin.ModelAdmin):
-    list_display = ("staff", "date", "in_time", "out_time", "worked_hours", "created_at")
-    list_filter = ("date", "staff__department", "created_at")
-    search_fields = ("staff__admin__first_name", "staff__admin__last_name", "staff__admin__email")
+    list_display = ("get_name", "date", "in_time", "out_time", "worked_hours", "created_at")
+    list_filter = ("date", "created_at")
+    search_fields = (
+        "staff__admin__first_name", "staff__admin__last_name", "staff__admin__email",
+        "student__admin__first_name", "student__admin__last_name", "student__admin__email"
+    )
     date_hierarchy = "date"
     readonly_fields = ("created_at", "updated_at", "worked_hours")
     fieldsets = (
-        ("Staff Information", {"fields": ("staff", "date")}),
+        ("User Link", {"fields": ("staff", "student", "date")}),
         ("Punch Times", {"fields": ("in_time", "out_time", "in_timestamp", "out_timestamp")}),
         ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
+
+    def get_name(self, obj):
+        if obj.staff:
+            return f"Staff: {obj.staff}"
+        if obj.student:
+            return f"Student: {obj.student}"
+        return "Unknown"
+    get_name.short_description = "Name"
 
 
 class EmployeeAttendanceAdmin(admin.ModelAdmin):
@@ -151,5 +162,22 @@ class EmployeeAttendanceAdmin(admin.ModelAdmin):
     )
 
 
+class StudentAttendanceAdmin(admin.ModelAdmin):
+    list_display = ("student", "date", "status", "in_time", "out_time", "worked_hours", "late_by_minutes")
+    list_filter = ("status", "date", "student__course")
+    search_fields = ("student__admin__first_name", "student__admin__last_name", "student__admin__email")
+    date_hierarchy = "date"
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        ("Student & Date", {"fields": ("student", "date", "status")}),
+        ("Punch Times", {"fields": ("in_time", "out_time", "worked_hours")}),
+        ("Deviations", {"fields": ("late_by_minutes", "early_out_by_minutes")}),
+        ("Notes", {"fields": ("remarks",)}),
+        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+
+
 admin.site.register(BiometricLog, BiometricLogAdmin)
 admin.site.register(EmployeeAttendance, EmployeeAttendanceAdmin)
+admin.site.register(StudentAttendance, StudentAttendanceAdmin)
+

@@ -1,6 +1,6 @@
 {% extends 'main_app/base.html' %}
 {% load static %}
-{% block page_title %}Employees Attendance{% endblock page_title %}
+{% block page_title %}{{ page_title }}{% endblock page_title %}
 {% block breadcrumb %}
 <li class="breadcrumb-item active">Attendance</li>
 {% endblock breadcrumb %}
@@ -12,8 +12,8 @@
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="card border-0 shadow-sm bg-light">
                 <div class="card-body text-center">
-                    <h6 class="text-muted mb-2">Total Staff</h6>
-                    <h3 class="mb-0">{{ total_staff }}</h3>
+                    <h6 class="text-muted mb-2">{% if user_type == 'student' %}Total Students{% else %}Total Staff{% endif %}</h6>
+                    <h3 class="mb-0">{{ total_count }}</h3>
                 </div>
             </div>
         </div>
@@ -36,18 +36,35 @@
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="card border-0 shadow-sm bg-warning bg-opacity-10">
                 <div class="card-body text-center">
-                    <h6 class="text-warning mb-2">Other</h6>
+                    <h6 class="text-warning mb-2">Other Status</h6>
                     <h3 class="mb-0 text-warning">{{ early_out_count }}</h3>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Tabs to switch between Staff and Students -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="btn-group shadow-sm" role="group" aria-label="Attendance Type">
+                <a href="?user_type=staff&date={{ date }}&status={{ status_filter }}" class="btn btn-outline-primary {% if user_type != 'student' %}active{% endif %}">
+                    <i class="fas fa-user-tie me-1"></i> Staff Daily Sheet
+                </a>
+                <a href="?user_type=student&date={{ date }}&status={{ status_filter }}" class="btn btn-outline-primary {% if user_type == 'student' %}active{% endif %}">
+                    <i class="fas fa-user-graduate me-1"></i> Student Daily Sheet
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Report Header -->
     <div class="card shadow-sm border-0 mb-3">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Daily Log Sheet</h5>
+        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">{% if user_type == 'student' %}Students{% else %}Employees{% endif %} Daily Log Sheet</h5>
             <div class="d-flex gap-2">
+                <a href="{% url 'biometric_device_simulator' %}" class="btn btn-sm btn-success" target="_blank">
+                    <i class="fas fa-fingerprint"></i> Biometric Terminal
+                </a>
                 <button class="btn btn-sm btn-outline-secondary" onclick="printAttendance()" title="Print">
                     <i class="fas fa-print"></i> Print
                 </button>
@@ -59,6 +76,7 @@
         <div class="card-body">
             <!-- Filters -->
             <form method="get" class="mb-4">
+                <input type="hidden" name="user_type" value="{{ user_type }}">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label for="date_filter" class="form-label">Date</label>
@@ -91,7 +109,7 @@
                             <th style="width: 5%">S.N</th>
                             <th style="width: 8%">Code</th>
                             <th style="width: 15%">Name</th>
-                            <th>Department</th>
+                            <th>{% if user_type == 'student' %}Course{% else %}Department/Course{% endif %}</th>
                             <th style="width: 8%">Late In</th>
                             <th style="width: 8%">InTime</th>
                             <th style="width: 8%">OutTime</th>
@@ -110,7 +128,7 @@
                             <td>{{ record.department }}</td>
                             <td>
                                 {% if record.late_in %}
-                                    <span class="badge bg-warning">{{ record.late_in }} min</span>
+                                    <span class="badge bg-warning text-dark">{{ record.late_in }} min</span>
                                 {% else %}
                                     <span class="text-muted">--</span>
                                 {% endif %}
@@ -132,7 +150,7 @@
                                 <span class="badge bg-light text-dark">{{ record.worked_hours }}</span>
                             </td>
                             <td>
-                                <span class="badge bg-{{ record.status_class }}">
+                                <span class="badge {{ record.status_class }}">
                                     {{ record.status|upper }}
                                 </span>
                             </td>
@@ -172,7 +190,7 @@
                     </div>
                     <div class="alert alert-info small" role="alert">
                         <i class="fas fa-info-circle"></i>
-                        All staff without biometric entry will be marked as <strong>Absent</strong>.
+                        All staff and students without biometric entry will be marked as <strong>Absent</strong>.
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -201,6 +201,8 @@ urlpatterns = [
     path("modules/attendance/", module_views.attendance_dashboard, name="attendance_dashboard"),
     path("modules/attendance/mark/", module_views.mark_biometric_attendance, name="mark_biometric_attendance"),
     path("modules/attendance/sync/", module_views.sync_biometric_data, name="sync_biometric_data"),
+    path("modules/attendance/device/", module_views.biometric_device_simulator, name="biometric_device_simulator"),
+    path("modules/attendance/device/punch/", module_views.biometric_device_punch, name="biometric_device_punch"),
     # Leave / Kaaj / Optional Holiday / Substitute
     path("leave/leaves-applied/", extra_views.leaves_applied, name="leaves_applied"),
     path("leave/kaaj/apply/", extra_views.kaaj_apply, name="kaaj_apply"),

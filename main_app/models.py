@@ -261,8 +261,9 @@ class Subject(models.Model):
 
 
 class BiometricLog(models.Model):
-    """Records employee punch-in and punch-out times from biometric system"""
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='biometric_logs')
+    """Records employee and student punch-in and punch-out times from biometric system"""
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='biometric_logs', null=True, blank=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='biometric_logs', null=True, blank=True)
     date = models.DateField(auto_now_add=False)
     in_time = models.TimeField(null=True, blank=True)
     out_time = models.TimeField(null=True, blank=True)
@@ -272,11 +273,15 @@ class BiometricLog(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('staff', 'date')
         ordering = ['-date', '-in_timestamp']
+        constraints = [
+            models.UniqueConstraint(fields=['staff', 'date'], name='unique_staff_date_biometric', condition=models.Q(staff__isnull=False)),
+            models.UniqueConstraint(fields=['student', 'date'], name='unique_student_date_biometric', condition=models.Q(student__isnull=False)),
+        ]
 
     def __str__(self):
-        return f"{self.staff} - {self.date}"
+        user_str = self.staff if self.staff else self.student
+        return f"{user_str} - {self.date}"
 
     @property
     def worked_hours(self):
@@ -333,6 +338,38 @@ class EmployeeAttendance(models.Model):
 
     def __str__(self):
         return f"{self.staff} - {self.date} - {self.status}"
+
+
+class StudentAttendance(models.Model):
+    """Daily attendance record with status (Present/Absent/Late/Early Out) for students"""
+    STATUS_CHOICES = [
+        ('present', 'Present'),
+        ('absent', 'Absent'),
+        ('late', 'Late'),
+        ('early_out', 'Early Out'),
+        ('half_day', 'Half Day'),
+        ('leave', 'Leave'),
+    ]
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='student_attendance_records')
+    date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='absent')
+    in_time = models.TimeField(null=True, blank=True)
+    out_time = models.TimeField(null=True, blank=True)
+    worked_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    late_by_minutes = models.IntegerField(default=0)  # Minutes late
+    early_out_by_minutes = models.IntegerField(default=0)  # Minutes early out
+    remarks = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'date')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.student} - {self.date} - {self.status}"
+
 
 
 class AttendanceReport(models.Model):

@@ -8,9 +8,10 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import (
     Admission,
@@ -34,6 +35,7 @@ from .models import (
     EmployeeTransferHistory,
     BiometricLog,
     EmployeeAttendance,
+    StudentAttendance,
     Book,
     BookLoan,
     ClearanceRequest,
@@ -1171,59 +1173,106 @@ def attendance_dashboard(request):
     # Get date and status filters
     date_str = request.GET.get('date')
     status_filter = request.GET.get('status', 'all')
+    user_type = request.GET.get('user_type', 'staff') # 'staff' or 'student'
 
     if date_str:
         try:
-            filter_date = parse_date(date_str)
+            cleaned_date_str = date_str.replace('/', '-')
+            filter_date = parse_date(cleaned_date_str)
         except:
             filter_date = datetime.today().date()
     else:
         filter_date = datetime.today().date()
 
-    # Get all attendance records for the selected date
-    attendance_records = EmployeeAttendance.objects.filter(date=filter_date).select_related('staff', 'staff__admin', 'staff__course')
+    if not filter_date:
+        filter_date = datetime.today().date()
 
-    # Apply status filter
-    if status_filter and status_filter != 'all':
-        attendance_records = attendance_records.filter(status=status_filter)
-
-    # Calculate statistics
-    total_staff = Staff.objects.count()
-    present = attendance_records.filter(status__in=['present', 'late']).count()
-    absent = attendance_records.filter(status='absent').count()
-    early_out = attendance_records.filter(status='early_out').count()
-    on_leave = attendance_records.filter(status='leave').count()
-
-    # Format data for template
     attendance_list = []
-    for idx, record in enumerate(attendance_records, 1):
-        attendance_list.append({
-            'sn': idx,
-            'code': record.staff.admin.id,
-            'name': f"{record.staff.admin.first_name} {record.staff.admin.last_name}",
-            'department': record.staff.department or record.staff.course.name if record.staff.course else 'N/A',
-            'late_in': record.late_by_minutes if record.status == 'late' else '',
-            'in_time': record.in_time.strftime('%H:%M') if record.in_time else '--',
-            'out_time': record.out_time.strftime('%H:%M') if record.out_time else '--',
-            'early_out': record.early_out_by_minutes if record.status == 'early_out' else '',
-            'worked_hours': f"{record.worked_hours:.2f}" if record.worked_hours else '--',
-            'status': record.get_status_display(),
-            'status_class': get_status_color_class(record.status),
-            'remarks': record.remarks or '',
-            'record_id': record.id,
-        })
+    
+    if user_type == 'student':
+        # Get all student attendance records for the selected date
+        attendance_records = StudentAttendance.objects.filter(date=filter_date).select_related('student', 'student__admin', 'student__course')
+        
+        # Apply status filter
+        if status_filter and status_filter != 'all':
+            attendance_records = attendance_records.filter(status=status_filter)
+            
+        # Calculate statistics
+        total_count = Student.objects.count()
+        present = attendance_records.filter(status__in=['present', 'late']).count()
+        absent = attendance_records.filter(status='absent').count()
+        early_out = attendance_records.filter(status='early_out').count()
+        on_leave = attendance_records.filter(status='leave').count()
+        
+        # Format data for template
+        for idx, record in enumerate(attendance_records, 1):
+            attendance_list.append({
+                'sn': idx,
+                'code': record.student.admin.id,
+                'name': f"{record.student.admin.first_name} {record.student.admin.last_name}",
+                'department': record.student.course.name if record.student.course else 'N/A',
+                'late_in': record.late_by_minutes if record.status == 'late' else '',
+                'in_time': record.in_time.strftime('%H:%M') if record.in_time else '--',
+                'out_time': record.out_time.strftime('%H:%M') if record.out_time else '--',
+                'early_out': record.early_out_by_minutes if record.status == 'early_out' else '',
+                'worked_hours': f"{record.worked_hours:.2f}" if record.worked_hours else '--',
+                'status': record.get_status_display(),
+                'status_class': get_status_color_class(record.status),
+                'remarks': record.remarks or '',
+                'record_id': record.id,
+            })
+            
+        page_title = 'Students Daily Attendance'
+        status_choices = StudentAttendance.STATUS_CHOICES
+        
+    else: # staff
+        # Get all attendance records for the selected date
+        attendance_records = EmployeeAttendance.objects.filter(date=filter_date).select_related('staff', 'staff__admin', 'staff__course')
+
+        # Apply status filter
+        if status_filter and status_filter != 'all':
+            attendance_records = attendance_records.filter(status=status_filter)
+
+        # Calculate statistics
+        total_count = Staff.objects.count()
+        present = attendance_records.filter(status__in=['present', 'late']).count()
+        absent = attendance_records.filter(status='absent').count()
+        early_out = attendance_records.filter(status='early_out').count()
+        on_leave = attendance_records.filter(status='leave').count()
+
+        # Format data for template
+        for idx, record in enumerate(attendance_records, 1):
+            attendance_list.append({
+                'sn': idx,
+                'code': record.staff.admin.id,
+                'name': f"{record.staff.admin.first_name} {record.staff.admin.last_name}",
+                'department': record.staff.department or record.staff.course.name if record.staff.course else 'N/A',
+                'late_in': record.late_by_minutes if record.status == 'late' else '',
+                'in_time': record.in_time.strftime('%H:%M') if record.in_time else '--',
+                'out_time': record.out_time.strftime('%H:%M') if record.out_time else '--',
+                'early_out': record.early_out_by_minutes if record.status == 'early_out' else '',
+                'worked_hours': f"{record.worked_hours:.2f}" if record.worked_hours else '--',
+                'status': record.get_status_display(),
+                'status_class': get_status_color_class(record.status),
+                'remarks': record.remarks or '',
+                'record_id': record.id,
+            })
+            
+        page_title = 'Employees Daily Attendance'
+        status_choices = EmployeeAttendance.STATUS_CHOICES
 
     context = {
-        'page_title': 'Employees Attendance',
+        'page_title': page_title,
         'date': filter_date.strftime('%Y/%m/%d'),
         'status_filter': status_filter,
+        'user_type': user_type,
         'attendance_records': attendance_list,
-        'total_staff': total_staff,
+        'total_count': total_count,
         'present_count': present,
         'absent_count': absent,
         'early_out_count': early_out,
         'on_leave_count': on_leave,
-        'status_choices': EmployeeAttendance.STATUS_CHOICES,
+        'status_choices': status_choices,
     }
 
     return render(request, 'modules/attendance.html', context)
@@ -1279,7 +1328,7 @@ def mark_biometric_attendance(request):
 
 
 def sync_biometric_data(request):
-    """Sync biometric data and auto-generate attendance records"""
+    """Sync biometric data and auto-generate attendance records for both staff and students"""
     if request.method == "POST":
         date_str = request.POST.get('sync_date')
 
@@ -1289,18 +1338,31 @@ def sync_biometric_data(request):
             # Get all biometric logs for the date
             biometric_logs = BiometricLog.objects.filter(date=sync_date)
 
-            processed = 0
+            processed_staff = 0
+            processed_student = 0
             for log in biometric_logs:
-                # Calculate attendance status
-                status_data = calculate_attendance_status(log.staff, sync_date, log)
+                if log.staff:
+                    # Calculate attendance status
+                    status_data = calculate_attendance_status(log.staff, sync_date, log)
 
-                # Create or update attendance
-                attendance, created = EmployeeAttendance.objects.update_or_create(
-                    staff=log.staff,
-                    date=sync_date,
-                    defaults=status_data
-                )
-                processed += 1
+                    # Create or update attendance
+                    EmployeeAttendance.objects.update_or_create(
+                        staff=log.staff,
+                        date=sync_date,
+                        defaults=status_data
+                    )
+                    processed_staff += 1
+                elif log.student:
+                    # Calculate attendance status
+                    status_data = calculate_attendance_status(log.student, sync_date, log)
+
+                    # Create or update attendance
+                    StudentAttendance.objects.update_or_create(
+                        student=log.student,
+                        date=sync_date,
+                        defaults=status_data
+                    )
+                    processed_student += 1
 
             # Mark all staff without biometric entry as absent
             all_staff = Staff.objects.all()
@@ -1314,11 +1376,31 @@ def sync_biometric_data(request):
                             'in_time': None,
                             'out_time': None,
                             'worked_hours': 0,
+                            'late_by_minutes': 0,
+                            'early_out_by_minutes': 0,
                         }
                     )
-                    processed += 1
+                    processed_staff += 1
 
-            messages.success(request, f"Synced attendance for {processed} staff members on {sync_date}")
+            # Mark all students without biometric entry as absent
+            all_students = Student.objects.all()
+            for student in all_students:
+                if not BiometricLog.objects.filter(student=student, date=sync_date).exists():
+                    StudentAttendance.objects.update_or_create(
+                        student=student,
+                        date=sync_date,
+                        defaults={
+                            'status': 'absent',
+                            'in_time': None,
+                            'out_time': None,
+                            'worked_hours': 0,
+                            'late_by_minutes': 0,
+                            'early_out_by_minutes': 0,
+                        }
+                    )
+                    processed_student += 1
+
+            messages.success(request, f"Synced attendance: {processed_staff} staff members and {processed_student} students on {sync_date}")
         except Exception as e:
             messages.error(request, f"Error syncing biometric data: {str(e)}")
 
@@ -1340,7 +1422,7 @@ def get_status_color_class(status):
     return color_map.get(status, 'badge-secondary')
 
 
-def calculate_attendance_status(staff, date, biometric_log):
+def calculate_attendance_status(user, date, biometric_log):
     """Calculate attendance status based on biometric log"""
     # Define working hours (e.g., 9 AM to 6 PM)
     CUTOFF_TIME = datetime.strptime('09:00', '%H:%M').time()
@@ -1397,4 +1479,120 @@ def calculate_attendance_status(staff, date, biometric_log):
         'late_by_minutes': late_minutes,
         'early_out_by_minutes': early_out_minutes,
     }
+
+
+def biometric_device_simulator(request):
+    """Render the biometric terminal simulation interface"""
+    staff_list = Staff.objects.all().select_related('admin', 'course')
+    student_list = Student.objects.all().select_related('admin', 'course')
+    
+    context = {
+        'page_title': 'Biometric Attendance Terminal',
+        'staff_list': staff_list,
+        'student_list': student_list,
+    }
+    return render(request, 'modules/biometric_device.html', context)
+
+
+@csrf_exempt
+def biometric_device_punch(request):
+    """AJAX endpoint for thumbprint punch on the simulator device"""
+    if request.method == "POST":
+        user_type = request.POST.get('user_type')
+        user_id = request.POST.get('user_id')
+        
+        if not user_type or not user_id:
+            return JsonResponse({"status": "error", "message": "Missing user_type or user_id"}, status=400)
+            
+        now = datetime.now()
+        current_date = now.date()
+        current_time = now.time()
+        
+        try:
+            if user_type == "staff":
+                staff = Staff.objects.get(id=user_id)
+                # Check if log already exists
+                log, created = BiometricLog.objects.get_or_create(
+                    staff=staff,
+                    date=current_date,
+                    defaults={
+                        'in_time': current_time,
+                        'in_timestamp': now,
+                    }
+                )
+                
+                punch_type = "IN"
+                if not created:
+                    # Update out_time if already checked in
+                    log.out_time = current_time
+                    log.out_timestamp = now
+                    log.save()
+                    punch_type = "OUT"
+                
+                # Automatically calculate daily attendance status in real-time!
+                status_data = calculate_attendance_status(staff, current_date, log)
+                EmployeeAttendance.objects.update_or_create(
+                    staff=staff,
+                    date=current_date,
+                    defaults=status_data
+                )
+                
+                name = f"{staff.admin.first_name} {staff.admin.last_name}"
+                role = "Staff"
+                
+            elif user_type == "student":
+                student = Student.objects.get(id=user_id)
+                # Check if log already exists
+                log, created = BiometricLog.objects.get_or_create(
+                    student=student,
+                    date=current_date,
+                    defaults={
+                        'in_time': current_time,
+                        'in_timestamp': now,
+                    }
+                )
+                
+                punch_type = "IN"
+                if not created:
+                    # Update out_time if already checked in
+                    log.out_time = current_time
+                    log.out_timestamp = now
+                    log.save()
+                    punch_type = "OUT"
+                
+                # Automatically calculate daily attendance status in real-time!
+                status_data = calculate_attendance_status(student, current_date, log)
+                StudentAttendance.objects.update_or_create(
+                    student=student,
+                    date=current_date,
+                    defaults=status_data
+                )
+                
+                name = f"{student.admin.first_name} {student.admin.last_name}"
+                role = f"Student ({student.course.name if student.course else 'N/A'})"
+                
+            else:
+                return JsonResponse({"status": "error", "message": "Invalid user_type"}, status=400)
+                
+            # Formatted response
+            formatted_time = current_time.strftime('%I:%M:%S %p')
+            return JsonResponse({
+                "status": "success",
+                "punch_type": punch_type,
+                "name": name,
+                "role": role,
+                "time": formatted_time,
+                "in_time": log.in_time.strftime('%I:%M %p') if log.in_time else '--',
+                "out_time": log.out_time.strftime('%I:%M %p') if log.out_time else '--',
+                "worked_hours": f"{log.worked_hours:.2f}" if log.worked_hours else '--',
+                "daily_status": status_data['status'].upper()
+            })
+            
+        except (Staff.DoesNotExist, Student.DoesNotExist):
+            return JsonResponse({"status": "error", "message": "User not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+            
+    return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+
 

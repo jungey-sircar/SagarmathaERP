@@ -1,0 +1,675 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}Biometric Attendance Terminal{% endblock page_title %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'attendance_dashboard' %}">Attendance</a></li>
+<li class="breadcrumb-item active">Biometric Terminal</li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="container-fluid py-4 biometric-container">
+    <div class="row justify-content-center">
+        <!-- Biometric Terminal Unit -->
+        <div class="col-xl-10">
+            <div class="terminal-card border-0 shadow-lg position-relative overflow-hidden">
+                <!-- Decorative Neon Blurs -->
+                <div class="neon-blur-1"></div>
+                <div class="neon-blur-2"></div>
+                
+                <div class="card-body p-5 position-relative z-index-2 text-white">
+                    <div class="row align-items-center g-5">
+                        
+                        <!-- Left Panel: Controls & Clock -->
+                        <div class="col-lg-6">
+                            <div class="terminal-brand mb-4 d-flex align-items-center gap-2">
+                                <i class="fas fa-fingerprint text-success fs-3 animate-pulse"></i>
+                                <div>
+                                    <h4 class="mb-0 fw-bold tracking-wide text-uppercase text-gradient">Sagarmatha ERP</h4>
+                                    <span class="text-muted text-uppercase tracking-wider small fw-600">Biometric Terminal System</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Digital Clock -->
+                            <div class="clock-display mb-5 p-4 rounded-4 border border-light border-opacity-10 shadow-sm glass-panel text-center">
+                                <div id="terminal-date" class="text-uppercase tracking-widest text-success fw-bold small mb-2">--:--:--</div>
+                                <div id="terminal-time" class="time-text fw-light tracking-wide text-white">00:00:00</div>
+                                <div class="badge bg-success bg-opacity-20 border border-success border-opacity-30 text-success px-3 py-1 rounded-pill mt-2 small text-uppercase tracking-wider">
+                                    <i class="fas fa-circle animate-pulse me-1 text-success"></i> Realtime Active
+                                </div>
+                            </div>
+                            
+                            <!-- Form Controls -->
+                            <div class="terminal-form p-4 rounded-4 border border-light border-opacity-10 glass-panel">
+                                <h6 class="mb-4 text-uppercase tracking-wider text-muted small fw-bold">Select Individual</h6>
+                                
+                                <!-- User Type Toggle -->
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-600 text-uppercase mb-2">User Type</label>
+                                    <div class="btn-group w-100 shadow-sm" role="group" aria-label="Terminal User Type">
+                                        <input type="radio" class="btn-check" name="user_type" id="type_staff" value="staff" checked autocomplete="off">
+                                        <label class="btn btn-outline-success border-opacity-20 fw-bold py-2 text-uppercase" for="type_staff">
+                                            <i class="fas fa-user-tie me-1"></i> Staff Member
+                                        </label>
+                                        
+                                        <input type="radio" class="btn-check" name="user_type" id="type_student" value="student" autocomplete="off">
+                                        <label class="btn btn-outline-success border-opacity-20 fw-bold py-2 text-uppercase" for="type_student">
+                                            <i class="fas fa-user-graduate me-1"></i> Student
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Search Select Dropdown -->
+                                <div class="mb-4">
+                                    <label for="user_select" class="form-label text-muted small fw-600 text-uppercase mb-2">Search Name or Code</label>
+                                    <select id="user_select" class="form-select border-light border-opacity-10 text-white rounded-3 py-2 bg-dark bg-opacity-50">
+                                        <option value="" disabled selected>-- Select a Staff Member --</option>
+                                        {% for staff in staff_list %}
+                                        <option value="{{ staff.id }}" data-type="staff" data-name="{{ staff.admin.first_name }} {{ staff.admin.last_name }}">
+                                            [{{ staff.admin.id }}] {{ staff.admin.first_name }} {{ staff.admin.last_name }} (Staff)
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Panel: Fingerprint Device Simulator -->
+                        <div class="col-lg-6 text-center">
+                            <div class="scanner-housing p-5 rounded-5 border border-light border-opacity-10 shadow-lg d-flex flex-column align-items-center justify-content-center glass-panel">
+                                <div class="led-bar mb-4" id="led-bar"></div>
+                                
+                                <!-- Fingerprint Pad -->
+                                <div class="scanner-pad-border position-relative mb-4" id="scanner-button">
+                                    <div class="scanner-pad d-flex align-items-center justify-content-center cursor-pointer">
+                                        <div class="scan-laser" id="scan-laser"></div>
+                                        <i class="fas fa-fingerprint scanner-icon text-success" id="scanner-icon"></i>
+                                    </div>
+                                </div>
+                                
+                                <h5 class="mb-2 fw-bold text-uppercase tracking-wider text-white" id="scanner-instruction">Scan Thumbprint</h5>
+                                <p class="text-muted small mb-0 px-4" id="scanner-subtext">Select an individual first, then click or press the biometric scanner pad above to record attendance punch.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Punch Success Display Overlay / Modal Slide -->
+                    <div class="row mt-5 justify-content-center" id="punch-success-card" style="display: none;">
+                        <div class="col-12">
+                            <div class="success-panel p-4 rounded-4 border border-success border-opacity-30 bg-success bg-opacity-10 text-center animate-fade-in position-relative">
+                                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" onclick="closeSuccessCard()"></button>
+                                <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+                                    <div class="badge bg-success bg-opacity-20 border border-success border-opacity-30 text-success p-3 rounded-circle d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-check-circle fs-3"></i>
+                                    </div>
+                                    <div class="text-start">
+                                        <h5 class="mb-1 fw-bold text-success text-uppercase tracking-wider" id="success-punch-type">Punch Recorded</h5>
+                                        <h3 class="mb-0 text-white fw-bold" id="success-name">--</h3>
+                                        <p class="text-muted small mb-0" id="success-role">--</p>
+                                    </div>
+                                </div>
+                                <hr class="border-success border-opacity-20 my-4">
+                                <div class="row g-3">
+                                    <div class="col-sm-3 col-6 border-end border-success border-opacity-10">
+                                        <div class="text-muted small text-uppercase tracking-wider mb-1">In Time</div>
+                                        <h5 class="mb-0 fw-bold text-success" id="success-in-time">--</h5>
+                                    </div>
+                                    <div class="col-sm-3 col-6 border-end border-success border-opacity-10">
+                                        <div class="text-muted small text-uppercase tracking-wider mb-1">Out Time</div>
+                                        <h5 class="mb-0 fw-bold text-success" id="success-out-time">--</h5>
+                                    </div>
+                                    <div class="col-sm-3 col-6 border-end border-success border-opacity-10">
+                                        <div class="text-muted small text-uppercase tracking-wider mb-1">Hours Worked</div>
+                                        <h5 class="mb-0 fw-bold text-white" id="success-worked-hours">--</h5>
+                                    </div>
+                                    <div class="col-sm-3 col-6">
+                                        <div class="text-muted small text-uppercase tracking-wider mb-1">Status</div>
+                                        <h5 class="mb-0 fw-bold" id="success-status">--</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Extra Styles for Neon & Glassmorphism Aesthetics -->
+<style>
+    .biometric-container {
+        background: linear-gradient(135deg, #09090b 0%, #18181b 100%);
+        min-height: calc(100vh - 120px);
+        font-family: 'Outfit', 'Inter', sans-serif;
+    }
+
+    .terminal-card {
+        background: #111118;
+        border-radius: 28px;
+    }
+
+    .neon-blur-1 {
+        position: absolute;
+        top: -150px;
+        left: -150px;
+        width: 400px;
+        height: 400px;
+        background: rgba(40, 167, 69, 0.15);
+        filter: blur(100px);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .neon-blur-2 {
+        position: absolute;
+        bottom: -150px;
+        right: -150px;
+        width: 450px;
+        height: 450px;
+        background: rgba(0, 123, 255, 0.1);
+        filter: blur(120px);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+    }
+
+    .text-gradient {
+        background: linear-gradient(90deg, #28a745 0%, #00bc8c 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .time-text {
+        font-size: 3.5rem;
+        font-family: 'Inter', monospace;
+        letter-spacing: -2px;
+        text-shadow: 0 0 20px rgba(255,255,255,0.1);
+    }
+
+    .animate-pulse {
+        animation: pulse-ring 2s infinite;
+    }
+
+    @keyframes pulse-ring {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.6;
+            transform: scale(0.95);
+        }
+    }
+
+    /* Form customization */
+    .btn-check + .btn-outline-success {
+        color: #a1a1aa;
+        background-color: rgba(255, 255, 255, 0.02);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+    .btn-check:checked + .btn-outline-success {
+        color: #fff;
+        background-color: #28a745;
+        border-color: #28a745;
+        box-shadow: 0 0 15px rgba(40,167,69,0.3);
+    }
+
+    #user_select {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    #user_select option {
+        background-color: #18181b;
+        color: #fff;
+    }
+
+    /* Biometric Scanner Housing */
+    .scanner-housing {
+        background: rgba(255, 255, 255, 0.02);
+        transition: border 0.3s ease;
+    }
+    .scanner-housing.scanning {
+        border-color: rgba(40, 167, 69, 0.3) !important;
+    }
+    .scanner-housing.success {
+        border-color: rgba(40, 167, 69, 0.5) !important;
+        box-shadow: 0 0 25px rgba(40, 167, 69, 0.15);
+    }
+    .scanner-housing.error {
+        border-color: rgba(220, 53, 69, 0.4) !important;
+        box-shadow: 0 0 25px rgba(220, 53, 69, 0.15);
+    }
+
+    .led-bar {
+        width: 120px;
+        height: 6px;
+        border-radius: 3px;
+        background: #374151;
+        transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .led-bar.active {
+        background: #28a745;
+        box-shadow: 0 0 10px #28a745;
+    }
+    .led-bar.scanning {
+        background: #00bc8c;
+        animation: led-scan 1s infinite alternate;
+    }
+    .led-bar.error {
+        background: #dc3545;
+        box-shadow: 0 0 10px #dc3545;
+    }
+
+    @keyframes led-scan {
+        0% { box-shadow: 0 0 2px #00bc8c; }
+        100% { box-shadow: 0 0 15px #00bc8c; }
+    }
+
+    /* Scanner Pad */
+    .scanner-pad-border {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        padding: 8px;
+        background: rgba(255,255,255,0.05);
+        border: 2px solid rgba(255, 255, 255, 0.08);
+        transition: transform 0.2s ease, border-color 0.3s ease;
+    }
+    .scanner-pad-border:hover {
+        transform: scale(1.02);
+    }
+    .scanner-pad-border.scanning {
+        border-color: #00bc8c;
+    }
+    .scanner-pad-border.success {
+        border-color: #28a745;
+        box-shadow: 0 0 20px rgba(40,167,69,0.2);
+    }
+    .scanner-pad-border.error {
+        border-color: #dc3545;
+        box-shadow: 0 0 20px rgba(220,53,69,0.2);
+    }
+
+    .scanner-pad {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: radial-gradient(circle, #1a1a26 0%, #0d0d14 100%);
+        border: 1px solid rgba(255,255,255,0.05);
+        overflow: hidden;
+    }
+
+    .scanner-icon {
+        font-size: 4.5rem;
+        opacity: 0.65;
+        transition: transform 0.2s ease, opacity 0.3s ease, color 0.3s ease, filter 0.3s ease;
+    }
+    .scanner-icon.active {
+        opacity: 1;
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 12px rgba(40,167,69,0.5));
+    }
+    .scanner-icon.scanning {
+        color: #00bc8c !important;
+        opacity: 1;
+        filter: drop-shadow(0 0 12px rgba(0, 188, 140, 0.6));
+    }
+    .scanner-icon.error {
+        color: #dc3545 !important;
+        opacity: 1;
+        filter: drop-shadow(0 0 12px rgba(220, 53, 69, 0.6));
+    }
+
+    .scan-laser {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, #00bc8c, transparent);
+        box-shadow: 0 0 12px #00bc8c;
+        border-radius: 2px;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .scan-laser.scanning {
+        opacity: 1;
+        animation: laser-slide 1.5s infinite linear;
+    }
+
+    @keyframes laser-slide {
+        0% { top: 15%; }
+        50% { top: 85%; }
+        100% { top: 15%; }
+    }
+
+    .cursor-pointer { cursor: pointer; }
+
+    /* Success Card Animation */
+    .success-panel {
+        background: rgba(40, 167, 69, 0.05);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<!-- Audio Synth and Controller Logic -->
+<script>
+    // Audio synthesizer context using Web Audio API (cross-browser compatible, no files needed)
+    let audioCtx = null;
+    function playBeep(freq = 880, duration = 0.15, type = 'sine') {
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.value = freq;
+            osc.type = type;
+            
+            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {
+            console.log("Audio synthesis not fully supported yet", e);
+        }
+    }
+
+    // Speech Synthesis for TTS confirmation
+    function speakAnnounce(message) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Cancel any existing speech
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.rate = 1.05;
+            utterance.pitch = 1.0;
+            utterance.volume = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    // Dynamic Clock Setup
+    function updateClock() {
+        const now = new Date();
+        
+        // Formatted Time (HH:MM:SS)
+        const hrs = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        const secs = String(now.getSeconds()).padStart(2, '0');
+        
+        const timeStr = `${hrs}:${mins}:${secs}`;
+        document.getElementById('terminal-time').innerText = timeStr;
+        
+        // Formatted Date
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        const dayName = days[now.getDay()];
+        const monthName = months[now.getMonth()];
+        const dateNum = now.getDate();
+        const year = now.getFullYear();
+        
+        const dateStr = `${dayName}, ${monthName} ${dateNum}, ${year}`;
+        document.getElementById('terminal-date').innerText = dateStr;
+    }
+    
+    // User lists data structures
+    const staffData = [
+        {% for staff in staff_list %}
+        { id: "{{ staff.id }}", label: "[{{ staff.admin.id }}] {{ staff.admin.first_name }} {{ staff.admin.last_name }} (Staff)" },
+        {% endfor %}
+    ];
+    
+    const studentData = [
+        {% for student in student_list %}
+        { id: "{{ student.id }}", label: "[{{ student.admin.id }}] {{ student.admin.first_name }} {{ student.admin.last_name }} ({{ student.course.name }})" },
+        {% endfor %}
+    ];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setInterval(updateClock, 1000);
+        updateClock();
+        
+        // Handles User Type change (Staff vs Student)
+        const staffToggle = document.getElementById('type_staff');
+        const studentToggle = document.getElementById('type_student');
+        const userSelect = document.getElementById('user_select');
+        
+        function populateDropdown(type) {
+            userSelect.innerHTML = `<option value="" disabled selected>-- Select a ${type === 'staff' ? 'Staff Member' : 'Student'} --</option>`;
+            const list = type === 'staff' ? staffData : studentData;
+            
+            list.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.innerText = item.label;
+                userSelect.appendChild(opt);
+            });
+            playBeep(600, 0.08);
+        }
+        
+        staffToggle.addEventListener('change', () => populateDropdown('staff'));
+        studentToggle.addEventListener('change', () => populateDropdown('student'));
+        
+        userSelect.addEventListener('change', function() {
+            // Wake up active state on selection
+            const scanIcon = document.getElementById('scanner-icon');
+            scanIcon.classList.add('active');
+            playBeep(1000, 0.05);
+        });
+        
+        // Biometric Scanning Trigger
+        const scanBtn = document.getElementById('scanner-button');
+        scanBtn.addEventListener('click', triggerBiometricScan);
+    });
+
+    let isScanning = false;
+    
+    function triggerBiometricScan() {
+        if (isScanning) return;
+        
+        const userSelect = document.getElementById('user_select');
+        const userId = userSelect.value;
+        const userType = document.querySelector('input[name="user_type"]:checked').value;
+        
+        if (!userId) {
+            // Scanner Error feedback
+            playBeep(220, 0.35, 'sawtooth');
+            speakAnnounce("Please select an individual first.");
+            
+            const scanIcon = document.getElementById('scanner-icon');
+            const scanBorder = document.getElementById('scanner-button');
+            const led = document.getElementById('led-bar');
+            
+            scanIcon.classList.add('error');
+            scanBorder.classList.add('error');
+            led.classList.add('error');
+            
+            document.getElementById('scanner-instruction').innerText = "Select User First";
+            document.getElementById('scanner-instruction').style.color = "#dc3545";
+            
+            setTimeout(() => {
+                scanIcon.classList.remove('error');
+                scanBorder.classList.remove('error');
+                led.classList.remove('error');
+                document.getElementById('scanner-instruction').innerText = "Scan Thumbprint";
+                document.getElementById('scanner-instruction').style.color = "#ffffff";
+            }, 1500);
+            return;
+        }
+        
+        // Active scanning state
+        isScanning = true;
+        
+        const scanIcon = document.getElementById('scanner-icon');
+        const scanBorder = document.getElementById('scanner-button');
+        const laser = document.getElementById('scan-laser');
+        const led = document.getElementById('led-bar');
+        const house = document.querySelector('.scanner-housing');
+        
+        scanIcon.classList.add('scanning');
+        scanBorder.classList.add('scanning');
+        laser.classList.add('scanning');
+        led.classList.add('scanning');
+        house.classList.add('scanning');
+        
+        document.getElementById('scanner-instruction').innerText = "Reading Thumbprint...";
+        document.getElementById('scanner-instruction').style.color = "#00bc8c";
+        
+        // Continuous soft click feedback during scanning
+        let scanBeepCount = 0;
+        let scanBeepInterval = setInterval(() => {
+            playBeep(1200, 0.03, 'triangle');
+            scanBeepCount++;
+            if (scanBeepCount >= 5) clearInterval(scanBeepInterval);
+        }, 250);
+        
+        // Simulate AJAX request
+        setTimeout(() => {
+            // Trigger server post punch
+            const formData = new FormData();
+            formData.append('user_type', userType);
+            formData.append('user_id', userId);
+            
+            fetch("{% url 'biometric_device_punch' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Reset scan animations
+                isScanning = false;
+                scanIcon.classList.remove('scanning');
+                scanBorder.classList.remove('scanning');
+                laser.classList.remove('scanning');
+                led.classList.remove('scanning');
+                house.classList.remove('scanning');
+                
+                if (data.status === 'success') {
+                    // Success state visual/audio feedback
+                    playBeep(1000, 0.1, 'sine');
+                    setTimeout(() => playBeep(1500, 0.25, 'sine'), 100);
+                    
+                    scanIcon.classList.add('active');
+                    scanBorder.classList.add('success');
+                    led.classList.add('active');
+                    house.classList.add('success');
+                    
+                    document.getElementById('scanner-instruction').innerText = `PUNCH ${data.punch_type} SUCCESSFUL`;
+                    document.getElementById('scanner-instruction').style.color = "#28a745";
+                    
+                    // Voice announcements
+                    let voiceMsg = `Access Granted. ${data.punch_type === 'IN' ? 'Welcome' : 'Goodbye'} ${data.name}. Punch ${data.punch_type} recorded at ${data.time}.`;
+                    speakAnnounce(voiceMsg);
+                    
+                    // Update and show success panel details
+                    document.getElementById('success-punch-type').innerText = `Punch ${data.punch_type} Recorded`;
+                    document.getElementById('success-name').innerText = data.name;
+                    document.getElementById('success-role').innerText = data.role;
+                    document.getElementById('success-in-time').innerText = data.in_time;
+                    document.getElementById('success-out-time').innerText = data.out_time;
+                    document.getElementById('success-worked-hours').innerText = data.worked_hours;
+                    
+                    const statusBadge = document.getElementById('success-status');
+                    statusBadge.innerText = data.daily_status;
+                    statusBadge.className = 'mb-0 fw-bold';
+                    
+                    if (data.daily_status === 'PRESENT') {
+                        statusBadge.classList.add('text-success');
+                    } else if (data.daily_status === 'LATE') {
+                        statusBadge.classList.add('text-warning');
+                    } else if (data.daily_status === 'EARLY_OUT') {
+                        statusBadge.classList.add('text-info');
+                    } else {
+                        statusBadge.classList.add('text-white');
+                    }
+                    
+                    document.getElementById('punch-success-card').style.display = 'block';
+                    
+                    // Reset to normal state after 5 seconds
+                    setTimeout(() => {
+                        scanBorder.classList.remove('success');
+                        led.classList.remove('active');
+                        house.classList.remove('success');
+                        document.getElementById('scanner-instruction').innerText = "Scan Thumbprint";
+                        document.getElementById('scanner-instruction').style.color = "#ffffff";
+                    }, 5000);
+                    
+                } else {
+                    handleScannerError(data.message || "Invalid thumbprint scanning response.");
+                }
+            })
+            .catch(err => {
+                isScanning = false;
+                scanIcon.classList.remove('scanning');
+                scanBorder.classList.remove('scanning');
+                laser.classList.remove('scanning');
+                led.classList.remove('scanning');
+                house.classList.remove('scanning');
+                handleScannerError("Connection failure or server error.");
+            });
+            
+        }, 1500);
+    }
+    
+    function handleScannerError(message) {
+        // Error visual/audio feedback
+        playBeep(220, 0.4, 'sawtooth');
+        speakAnnounce("Punch rejected. Please try again.");
+        
+        const scanIcon = document.getElementById('scanner-icon');
+        const scanBorder = document.getElementById('scanner-button');
+        const led = document.getElementById('led-bar');
+        const house = document.querySelector('.scanner-housing');
+        
+        scanIcon.classList.add('error');
+        scanBorder.classList.add('error');
+        led.classList.add('error');
+        house.classList.add('error');
+        
+        document.getElementById('scanner-instruction').innerText = "Punch Rejected";
+        document.getElementById('scanner-instruction').style.color = "#dc3545";
+        
+        setTimeout(() => {
+            scanIcon.classList.remove('error');
+            scanBorder.classList.remove('error');
+            led.classList.remove('error');
+            house.classList.remove('error');
+            document.getElementById('scanner-instruction').innerText = "Scan Thumbprint";
+            document.getElementById('scanner-instruction').style.color = "#ffffff";
+        }, 2500);
+        
+        alert(message);
+    }
+    
+    function closeSuccessCard() {
+        document.getElementById('punch-success-card').style.display = 'none';
+        playBeep(500, 0.05);
+    }
+</script>
+{% endblock content %}
